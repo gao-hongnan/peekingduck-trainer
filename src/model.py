@@ -16,6 +16,7 @@ from typing import Any, Optional, Tuple
 import torch
 import torch.nn.functional as F
 import torchinfo
+from torchinfo.model_statistics import ModelStatistics
 import torchvision
 from torch import nn
 
@@ -77,7 +78,7 @@ class Model(ABC, nn.Module):
 
     def model_summary(
         self, input_size: Optional[Tuple[int, int, int, int]] = None, **kwargs: Any
-    ) -> torchinfo.model_statistics.ModelStatistics:
+    ) -> ModelStatistics:
         """Wrapper for torchinfo package to get the model summary.
         FIXME: Potentially silent error because it equips model to device
         without explicitly doing to(device).
@@ -92,7 +93,6 @@ class Model(ABC, nn.Module):
         return torchinfo.summary(self.model, input_size=input_size, **kwargs)
 
     def get_last_layer(self):
-        # FIXME: Implement this properly, works for TIMM.
         """Get the last layer information of TIMM Model."""
         last_layer_name = None
         for name, _param in self.model.named_modules():
@@ -111,7 +111,7 @@ class ImageClassificationModel(Model):
     """An generic image classification model.
 
     Note:
-        1. This is generic in the sense that it can be used for any image classification by just
+        This is generic in the sense that it can be used for any image classification by just
             modifying the head.
     """
 
@@ -121,23 +121,20 @@ class ImageClassificationModel(Model):
         self.backbone = self.load_backbone()
         self.head = self.modify_head()
         self.model = self.create_model()
-        # self.model.apply(self._init_weights) # TODO activate if init weights
+        # self.model.apply(self._init_weights) # activate if init weights
 
     def create_model(self) -> nn.Module:
-        """Create the model."""
-        # TODO: Ask Yier and David whether it is sensible to use self here even though
-        # create_model takes in backbone and head.
-        # TODO: Might check TIMM on he does it elegantly?
+        """Create the model.
+        NOTE:
+        1. Ask team whether it is sensible to use self here even though
+            create_model takes in backbone and head.
+        2. Check TIMM on he does it elegantly?
+        """
         self.backbone.fc = self.head
         return self.backbone
 
     def load_backbone(self) -> nn.Module:
-        """Load the backbone of the model.
-
-        Note:
-            1. This typically is loaded from timm or torchvision.
-            2. This is not mandatory since users can just create it in create_model.
-        """
+        """Load the backbone of the model."""
 
         backbone = getattr(torchvision.models, self.pipeline_config.model.model_name)(
             pretrained=self.pipeline_config.model.pretrained
@@ -147,14 +144,13 @@ class ImageClassificationModel(Model):
     def modify_head(self) -> nn.Module:
         """Modify the head of the model.
 
-        NOTE: This part is very tricky, to modify the head,
+        NOTE/TODO: This part is very tricky, to modify the head,
         the penultimate layer of the backbone is taken, but different
         models will have different names for the penultimate layer.
         Maybe see my old code for reference where I check for it?
         """
         in_features = self.backbone.fc.in_features  # fc is hardcoded
         out_features = self.pipeline_config.model.num_classes
-
         head = nn.Linear(in_features=in_features, out_features=out_features)
         return head
 
@@ -177,6 +173,7 @@ class ImageClassificationModel(Model):
     def forward_pass(self, inputs: torch.Tensor) -> torch.Tensor:
         """Forward pass of the model."""
         y = self.model(inputs)
+        # TODO: replace print with logging
         print(f"X: {inputs.shape}, Y: {y.shape}")
         print("Forward Pass Successful")
 

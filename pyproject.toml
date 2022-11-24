@@ -9,5 +9,6 @@
         "import-error",
         "wrong-import-position",
         "redefined-outer-name",
+        "invalid-name",
     ]
     ignore-paths = ["^./tmp.*$", "^./tests/.*", "^./docs/.*", "^./.venv/.*"]
