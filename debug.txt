@@ -1,0 +1,104 @@
+$ python main_new.py 
+Using Seed Number 1992
+2022-11-18 16:34:10: 
+Training on Fold None and using custom
+
+Train. Loss: 0.947: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1875/1875 [00:19<00:00, 97.37it/s]
+2022-11-18 16:34:29:
+[RESULT]: Train. Epoch 1:
+Avg Train Summary Loss: 0.947
+Learning Rate: 0.00010
+Time Elapsed: 00:00:19
+
+Validation. Loss: 0.241: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 313/313 [00:01<00:00, 156.51it/s] 
+2022-11-18 16:34:31: 
+[RESULT]: Validation. Epoch 1
+Avg Val Summary Loss: 0.241
+Avg Val Accuracy: 0.935
+Avg Val Macro AUROC: 0.996
+Time Elapsed: 00:00:02
+
+2022-11-18 16:34:31: 
+Validation valid_macro_auroc improved from -inf to 0.996415913105011
+2022-11-18 16:34:31:
+Saving model with best valid valid_macro_auroc score: 0.996415913105011
+
+Train. Loss: 0.404: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1875/1875 [00:17<00:00, 104.81it/s] 
+2022-11-18 16:34:49:
+[RESULT]: Train. Epoch 2:
+Avg Train Summary Loss: 0.404
+Learning Rate: 0.00010
+Time Elapsed: 00:00:17
+
+Validation. Loss: 0.148: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 313/313 [00:02<00:00, 151.23it/s]
+2022-11-18 16:34:52: 
+[RESULT]: Validation. Epoch 2
+Avg Val Summary Loss: 0.148
+Avg Val Accuracy: 0.954
+Avg Val Macro AUROC: 0.998
+Time Elapsed: 00:00:02
+
+2022-11-18 16:34:52: 
+Validation valid_macro_auroc improved from 0.996415913105011 to 0.9984580278396606
+2022-11-18 16:34:52:
+Saving model with best valid valid_macro_auroc score: 0.9984580278396606
+
+
+
+####### MNIST 3 Epoch #############
+2022-11-21 12:48:18: 
+Training on Fold None and using custom
+
+2022-11-21 12:48:33: 
+[RESULT]: Train. Epoch 1:
+Avg Train Summary Loss: 0.950            
+Learning Rate: 0.00010
+Time Elapsed: 00:00:15
+
+2022-11-21 12:48:34: 
+[RESULT]: Validation. Epoch 1
+Avg Val Summary Loss: 0.242            
+Avg Val Accuracy: 0.936
+Avg Val Macro AUROC: 0.996            
+Time Elapsed: 00:00:01
+
+2022-11-21 12:48:34: 
+Validation valid_accuracy improved from -inf to 0.9355999827384949
+2022-11-21 12:48:34: 
+Saving model with best valid valid_accuracy score: 0.9355999827384949
+
+2022-11-21 12:48:48: 
+[RESULT]: Train. Epoch 2:
+Avg Train Summary Loss: 0.404            
+Learning Rate: 0.00010
+Time Elapsed: 00:00:13
+
+2022-11-21 12:48:49: 
+[RESULT]: Validation. Epoch 2
+Avg Val Summary Loss: 0.150            
+Avg Val Accuracy: 0.952
+Avg Val Macro AUROC: 0.998            
+Time Elapsed: 00:00:01
+
+2022-11-21 12:48:49: 
+Validation valid_accuracy improved from 0.9355999827384949 to 0.9524000287055969
+2022-11-21 12:48:49: 
+Saving model with best valid valid_accuracy score: 0.9524000287055969
+
+2022-11-21 12:49:03: 
+[RESULT]: Train. Epoch 3:
+Avg Train Summary Loss: 0.309            
+Learning Rate: 0.00009
+Time Elapsed: 00:00:13
+
+2022-11-21 12:49:04: 
+[RESULT]: Validation. Epoch 3
+Avg Val Summary Loss: 0.118            
+Avg Val Accuracy: 0.961
+Avg Val Macro AUROC: 0.999            
+Time Elapsed: 00:00:01
+
+2022-11-21 12:49:04: 
+Validation valid_accuracy improved from 0.9524000287055969 to 0.9614999890327454
+2022-11-21 12:49:04: 
+Saving model with best valid valid_accuracy score: 0.9614999890327454
