@@ -1,40 +1,26 @@
 from __future__ import generators, print_function
 
-import shutil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-
 import wandb
-from configs import config, global_params, mnist_params
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
+from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
+from torchmetrics.classification import MulticlassCalibrationError
+
+from configs import config, global_params, mnist_params
+from src import dataset
 from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter
-from torchmetrics import (
-    MetricCollection,
-    Accuracy,
-    Precision,
-    Recall,
-    AUROC,
-)
-from torchmetrics.classification import MulticlassCalibrationError
-from src import (
-    dataset,
-)
-from src.metrics import metric
-from src.trainer import Trainer
 from src.dataset import ImageClassificationDataModule, MNISTDataModule
+from src.metrics import metric
 from src.model import ImageClassificationModel, MNISTModel
+from src.trainer import Trainer
 from src.utils import general_utils
-
-
-# BASE_DIR = Path(__file__).parent.parent.absolute().__str__()
-# sys.path.append(BASE_DIR)
-
 
 device = config.DEVICE
 logs_dir = global_params.PipelineConfig.stores.logs_dir
@@ -82,7 +68,10 @@ def log_gradcam(
     plot_gradcam: bool = True,
 ):
     """Log gradcam images into wandb for error analysis.
-    # TODO: Consider getting the logits for error analysis, for example, if a predicted image which is correct has high logits this means the model is very sure, conversely, if a predicted image has low logits and also wrong, we also check why.
+    # TODO: Consider getting the logits for error analysis,
+    # for example, if a predicted image which is correct has high logits
+    # this means the model is very sure, conversely, if a predicted image has
+    # low logits and also wrong, we also check why.
     """
 
     wandb_table = wandb.Table(
@@ -313,13 +302,24 @@ def train_loop(pipeline_config: global_params.PipelineConfig, *args, **kwargs):
 
 def train_steel_defect(debug: bool = True):
     pipeline_config = global_params.PipelineConfig()
+    num_classes = pipeline_config.global_train_params.num_classes  # 2
     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+    metrics_collection = MetricCollection(
+        [
+            Accuracy(num_classes=num_classes),
+            Precision(num_classes=num_classes),
+            Recall(num_classes=num_classes),
+            AUROC(num_classes=num_classes, average="macro"),
+            MulticlassCalibrationError(
+                num_classes=num_classes
+            ),  # similar to brier loss
+        ]
+    )
     trainer = Trainer(
         pipeline_config=pipeline_config,
         model=model,
-        model_artifacts_path=pipeline_config.stores.artifacts_dir,
-        device=device,
-        # wandb_run=wandb_run,
+        metrics=metrics_collection,
+        callbacks=[History(), MetricMeter()],
     )
 
     dm = ImageClassificationDataModule(pipeline_config)
@@ -338,7 +338,10 @@ def train_steel_defect(debug: bool = True):
 
 
 def train_mnist(debug: bool = False):
+    # TODO: maybe when compiling pipeline config, we can save state of the config as callables,
+    # like torchflare's self.state dict.
     pipeline_config = mnist_params.PipelineConfig()
+    print(f"Pipeline Config: {pipeline_config}")
     num_classes = pipeline_config.global_train_params.num_classes  # 10
 
     dm = MNISTDataModule(pipeline_config)
@@ -361,7 +364,6 @@ def train_mnist(debug: bool = False):
         model=model,
         metrics=metrics_collection,
         callbacks=[History(), MetricMeter()],
-        # wandb_run=wandb_run,
     )
 
     if debug:
