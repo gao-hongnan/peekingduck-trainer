@@ -28,3 +28,9 @@ If your computer does not have GPU, then you can install the CPU version of PyTo
 ```bash
 ~/gaohn/peekingduck-trainer (venv) $ pip3 install torch torchvision torchaudio # 1.12.1
 ```
+
+### Create Folder Structure
+
+```bash
+~/gaohn/peekingduck-trainer (venv) $ python configs/config.py
+```
