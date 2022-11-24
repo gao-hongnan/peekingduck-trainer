@@ -3,36 +3,36 @@
 2. Github: https://github.com/Lightning-AI/lightning/blob/master/src/pytorch_lightning/core/hooks.py
 """
 from __future__ import annotations
+
 import os
 import sys
 
 sys.path.insert(1, os.getcwd())
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Optional, Union
 
-
+import albumentations as A
 import cv2
 import pandas as pd
 import torch
 import torchvision
+import torchvision.transforms as T
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset, Subset
-import torchvision.transforms as T
-import albumentations as A
-from pathlib import Path
+from torchvision.datasets import MNIST
+
 from configs.global_params import PipelineConfig
 from src.augmentations import ImageClassificationTransforms
 from src.utils import (
-    seed_all,
-    show,
+    create_dataframe_with_image_info,
     download_to,
     extract_file,
-    create_dataframe_with_image_info,
     return_list_of_files,
+    seed_all,
+    show,
 )
-from torchvision.datasets import MNIST
-
 
 TransformTypes = Optional[Union[A.Compose, T.Compose]]
 
@@ -48,6 +48,7 @@ class ImageClassificationDataset(Dataset):
         stage: str = "train",
         **kwargs,
     ) -> None:
+        super().__init__(**kwargs)
         """Constructor for the dataset class.
 
         Note:
@@ -62,7 +63,7 @@ class ImageClassificationDataset(Dataset):
                 to apply to the images.
             stage (str): Defaults to "train". One of ['train', 'valid', 'test', 'gradcam']
         """
-        # TODO: it is hardcoded and can be put in config
+        # TODO: it is hardcoded and can be put in pipeline_config to be consistent.
         self.image_path = df["image_path"].values
         self.image_ids = df["image_id"].values
         self.targets = df["class_id"].values if stage != "test" else None
@@ -71,11 +72,77 @@ class ImageClassificationDataset(Dataset):
         self.stage = stage
         self.path = path
 
-        # TODO: Add checks for correct input modes etc.
-
     def __len__(self) -> int:
         """Return the length of the dataset."""
         return len(self.df)
+
+    def check_correct_dtype(self, X: torch.Tensor, y: torch.Tensor) -> None:
+        """Check if the datatypes of X and y are correct. This is important as
+        the loss function expects a certain datatype. See my repo/src/dataset.py."""
+        raise NotImplementedError
+
+    def check_correct_shape(self) -> None:
+        """Check the shapes of X and y, for eg channels first."""
+        raise NotImplementedError
+
+    def apply_image_transforms(self, image: torch.Tensor) -> torch.Tensor:
+        """Apply transforms to the image."""
+        if self.transforms and isinstance(self.transforms, A.Compose):
+            image = self.transforms(image=image)["image"]
+        elif self.transforms and isinstance(self.transforms, T.Compose):
+            image = self.transforms(image)
+        else:
+            image = torch.from_numpy(image).permute(2, 0, 1)  # float
+        return image
+
+    # pylint: disable=no-self-use # not yet!
+    def apply_target_transforms(
+        self, target: torch.Tensor, dtype=torch.long
+    ) -> torch.Tensor:
+        """Apply transforms to the target.
+        This is useful for tasks such as segmentation object detection
+        where targets are in the form of bounding boxes, segmentation masks etc.
+        """
+        # FIXME: recall BCEWithLogitsLoss expects a target.float()
+        print(type(dtype))
+        return torch.tensor(target, dtype=dtype)
+
+    def __getitem__(
+        self, index: int
+    ) -> Union[torch.FloatTensor, Union[torch.FloatTensor, torch.LongTensor]]:
+        """Implements the getitem method.
+
+        Note:
+            The following target dtype is expected:
+            - BCEWithLogitsLoss expects a target.float()
+            - CrossEntropyLoss expects a target.long()
+
+        Args:
+            index (int): index of the dataset.
+
+        Returns:
+            image (torch.FloatTensor): The image tensor.
+            target (Union[torch.FloatTensor, torch.LongTensor]]): The target tensor.
+        """
+        image_path = self.image_path[index]
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = self.apply_image_transforms(image)
+
+        # Get target for all modes except for test dataset.
+        # If test, replace target with dummy ones as placeholder.
+        target = self.targets[index] if self.stage != "test" else torch.ones(1)
+        target = self.apply_target_transforms(target)
+
+        if self.stage in ["train", "valid", "debug"]:
+            return image, target
+        elif self.stage == "test":
+            return image
+        elif self.stage == "gradcam":
+            # get image id as well to show on matplotlib image!
+            return image, target, self.image_ids[index]
+        else:
+            raise ValueError(f"Invalid stage {self.stage}.")
 
     @classmethod
     def from_df(
@@ -119,68 +186,6 @@ class ImageClassificationDataset(Dataset):
             Same for valid and test.
         """
         return cls(path=path, transforms=transforms, stage=stage, **kwargs)
-
-    def check_correct_dtype(self, X: torch.Tensor, y: torch.Tensor) -> None:
-        """Check if the datatypes of X and y are correct. This is important as
-        the loss function expects a certain datatype. See my repo/src/dataset.py."""
-        raise NotImplementedError
-
-    def check_correct_shape(self) -> None:
-        """Check the shapes of X and y, for eg channels first."""
-        raise NotImplementedError
-
-    def apply_image_transforms(self, image: torch.Tensor) -> torch.Tensor:
-        """Apply transforms to the image."""
-        if self.transforms and isinstance(self.transforms, A.Compose):
-            image = self.transforms(image=image)["image"]
-        elif self.transforms and isinstance(self.transforms, T.Compose):
-            image = self.transforms(image)
-        else:
-            image = torch.from_numpy(image).permute(2, 0, 1)  # float
-        return image
-
-    def apply_target_transforms(self, target: torch.Tensor) -> torch.Tensor:
-        """Apply transforms to the target."""
-        target = torch.tensor(target, dtype=torch.long)  # FIXME: hardcoded torch.long
-        # other transforms such as bbox transforms can be applied here
-        return target
-
-    def __getitem__(
-        self, index: int
-    ) -> Union[torch.FloatTensor, Union[torch.FloatTensor, torch.LongTensor]]:
-        """Implements the getitem method.
-
-        Note:
-            The following target dtype is expected:
-            - BCEWithLogitsLoss expects a target.float()
-            - CrossEntropyLoss expects a target.long()
-
-        Args:
-            index (int): index of the dataset.
-
-        Returns:
-            image (torch.FloatTensor): The image tensor.
-            target (Union[torch.FloatTensor, torch.LongTensor]]): The target tensor.
-        """
-        image_path = self.image_path[index]
-        image = cv2.imread(image_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image = self.apply_image_transforms(image)
-
-        # Get target for all modes except for test dataset.
-        # If test, replace target with dummy ones as placeholder.
-        target = self.targets[index] if self.stage != "test" else torch.ones(1)
-        target = self.apply_target_transforms(target)
-
-        if self.stage in ["train", "valid", "debug"]:
-            return image, target
-        elif self.stage == "test":
-            return image
-        elif self.stage == "gradcam":
-            # get image id as well to show on matplotlib image!
-            return image, target, self.image_ids[index]
-        else:
-            raise ValueError(f"Invalid stage {self.stage}.")
 
 
 class CustomizedDataModule(ABC):
@@ -296,35 +301,36 @@ class ImageClassificationDataModule(CustomizedDataModule):
         self.transforms = ImageClassificationTransforms(pipeline_config)
 
     def prepare_data(self) -> None:
-        """Download data here and prepare."""
-        # TODO: I modified the original castings data so no need download for now.
-        # url = self.pipeline_config.data.url
-        # blob_file = self.pipeline_config.data.blob_file
-        # root_dir = self.pipeline_config.data.root_dir
+        """Download data here and prepare.
+        TODO:
+            1. Here needs to be more generic for users,
+            for example, if user choose train_test_split, then we need to
+            split accordingly. If user choose KFold, then we need to split
+            to 5 folds. I will include examples I have done.
+            2. Config should hold a "CV" strategy for users to choose from.
+        """
+        url = self.pipeline_config.data.url
+        blob_file = self.pipeline_config.data.blob_file
+        root_dir = self.pipeline_config.data.root_dir
+        data_dir = self.pipeline_config.data.data_dir
 
-        # download_to(url, blob_file, root_dir)
-        # extract_file(root_dir, blob_file)
+        if self.pipeline_config.data.download:
+            download_to(url, blob_file, root_dir)
+            extract_file(root_dir, blob_file)
 
-        # TODO: Here needs to be more generic for users,
-        # for example, if user choose train_test_split, then we need to
-        # split accordingly. If user choose KFold, then we need to split
-        # to 5 folds.
+        all_images = return_list_of_files(
+            data_dir, extensions=[".jpg", ".png", ".jpeg"], return_string=False
+        )
 
-        # data_dir = self.pipeline_config.data.data_dir
+        df = create_dataframe_with_image_info(
+            all_images,
+            self.pipeline_config.data.class_name_to_id,
+            save_path=self.pipeline_config.data.data_csv,
+        )
 
-        # class_name_to_id = {"ok": 0, "defect": 1}
-
-        # all_images = return_list_of_files(
-        #     data_dir, extensions=[".jpg", ".png", ".jpeg"], return_string=False
-        # )
-
-        # df = create_dataframe_with_image_info(
-        #     all_images, class_name_to_id, save_path=data_dir / "df.csv"
-        # )
-
-        self.df = pd.read_csv(self.pipeline_config.data.data_csv)
+        # self.df = pd.read_csv(self.pipeline_config.data.data_csv)
         self.train_df, self.valid_df = train_test_split(
-            self.df, test_size=0.1, random_state=42
+            df, test_size=0.1, random_state=42
         )
         if self.pipeline_config.datamodule.debug:
             self.debug_train_df = self.train_df.sample(100)

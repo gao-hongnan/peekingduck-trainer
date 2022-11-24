@@ -140,7 +140,7 @@ def seed_all(seed: int = 1992) -> None:
 
 def seed_worker(_worker_id) -> None:
     """Seed a worker with the given ID."""
-    worker_seed = torch.initial_seed() % 2**32
+    worker_seed = torch.initial_seed() % 2 ** 32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
 
@@ -220,11 +220,15 @@ def create_dataframe_with_image_info(
         image_id = image_path.stem
 
         # get the label
-        class_name = image_path.parents[0].name
-        # if image_id.startswith("cast_ok"):
-        #     class_name = "ok"
-        # else:
-        #     class_name = "defect"
+        # FIXME: this is a hacky way to get the label and sometimes if
+        # folders organized by class name then this will fail so need to use
+        # image_path.parents[0].name
+        # class_name = image_path.parents[0].name
+        if image_id.startswith("cast_ok"):
+            class_name = "ok"
+        else:
+            class_name = "defect"
+
         class_id = int(class_name_to_id[class_name])
 
         image_path = image_path.as_posix()

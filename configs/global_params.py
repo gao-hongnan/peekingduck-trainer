@@ -17,21 +17,28 @@ from configs import config
 class Data:
     """Class for data related params."""
 
-    root_dir: Optional[Path] = config.DATA_DIR  # data/MNIST/...
+    root_dir: Optional[Path] = config.DATA_DIR  # data/
     url: Optional[
         str
-    ] = "https://storage.googleapis.com/peekingduck/data/castings_data.zip"  # https://...
+    ] = "https://github.com/gao-hongnan/peekingduck-trainer/releases/download/v0.0.0-alpha/castings.zip"
     blob_file: Optional[str] = "castings.zip"
-    # data_csv: str = (
-    #     "/Users/reighns/gaohn/gaohn-pytorch-classification/castings_data/df.csv"
-    # )
     data_csv: Union[str, Path] = field(init=False)
     data_dir: Union[str, Path] = field(init=False)
+    class_name_to_id: Optional[Dict[str, int]] = field(
+        default_factory=lambda: {"ok": 0, "defect": 1}
+    )
+    class_id_to_name: Optional[Dict[int, str]] = field(init=False)
 
     def __post_init__(self) -> None:
         """Post init method for dataclass."""
-        self.data_dir = Path(config.DATA_DIR) / "castings_data"
+        self.data_dir = Path(config.DATA_DIR) / "castings"
         self.data_csv = self.data_dir / "df.csv"
+        self.class_id_to_name = {v: k for k, v in self.class_name_to_id.items()}
+
+    @property
+    def download(self) -> bool:
+        """Return True if data is not downloaded."""
+        return not Path(self.data_dir).exists()
 
 
 @dataclass(frozen=False, init=True)
