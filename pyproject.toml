@@ -1,0 +1,12 @@
+[tool.pylint]
+    [tool.pylint.'MESSAGES CONTROL']
+    disable = [
+        "access-member-before-definition",
+        "attribute-defined-outside-init",
+        "duplicate-code",
+        "logging-fstring-interpolation",
+        "no-member",
+        "import-error",
+        "wrong-import-position",
+        "redefined-outer-name",
+    ]
