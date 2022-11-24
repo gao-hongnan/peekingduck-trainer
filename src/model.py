@@ -1,3 +1,7 @@
+"""Model Interface.
+This module defines the interface for all models.
+It follows the Strategy Pattern: https://github.com/msaroufim/ml-design-patterns.
+"""
 from __future__ import annotations
 
 import os
@@ -6,16 +10,15 @@ import sys
 sys.path.insert(1, os.getcwd())
 
 import functools
-from pathlib import Path
-from typing import Callable, Dict, OrderedDict, Tuple, Union, Any, List, Optional
+from abc import ABC, abstractmethod
+from typing import Any, Optional, Tuple
 
-import torch.nn.functional as F
 import torch
-
+import torch.nn.functional as F
 import torchinfo
 import torchvision
 from torch import nn
-from abc import ABC, abstractmethod
+
 from configs.global_params import PipelineConfig
 from src.utils import seed_all
 
@@ -37,16 +40,6 @@ class Model(ABC, nn.Module):
         as the shape matches.
         """
         raise NotImplementedError("Please implement your own model.")
-
-    @staticmethod
-    def get_model_summary(
-        model: nn.Module,
-        input_size: Tuple[int, int, int, int],
-        device: str,
-        **kwargs: Any,
-    ) -> torchinfo.model_statistics.ModelStatistics:
-        """Wrapper for torchinfo package."""
-        return torchinfo.summary(model, input_size=input_size, device=device, **kwargs)
 
     def load_backbone(self) -> nn.Module:
         """Load the backbone of the model.
@@ -82,22 +75,21 @@ class Model(ABC, nn.Module):
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """Forward pass of the model."""
 
-    @property
-    def model_summary(self) -> torchinfo.model_statistics.ModelStatistics:
-        """Get the model summary.
+    def model_summary(
+        self, input_size: Optional[Tuple[int, int, int, int]] = None, **kwargs: Any
+    ) -> torchinfo.model_statistics.ModelStatistics:
+        """Wrapper for torchinfo package to get the model summary.
         FIXME: Potentially silent error because it equips model to device
         without explicitly doing to(device).
         """
-        return self.get_model_summary(
-            self.model,
-            (
+        if input_size is None:
+            input_size = (
                 1,
                 3,
                 self.pipeline_config.augmentation.image_size,
                 self.pipeline_config.augmentation.image_size,
-            ),
-            device=self.pipeline_config.device,
-        )
+            )
+        return torchinfo.summary(self.model, input_size=input_size, **kwargs)
 
     def get_last_layer(self):
         # FIXME: Implement this properly, works for TIMM.
@@ -219,7 +211,7 @@ if __name__ == "__main__":
     seed_all(42)
     pipeline_config = PipelineConfig()
     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
-    print(model.model_summary)
+    print(model.model_summary(device=pipeline_config.device))
 
     inputs = torch.randn(1, 3, 224, 224).to(pipeline_config.device)
 
