@@ -1,4 +1,4 @@
-[tool.pylint]
+[tool.pylint.MASTER]
     [tool.pylint.'MESSAGES CONTROL']
     disable = [
         "access-member-before-definition",
@@ -10,3 +10,4 @@
         "wrong-import-position",
         "redefined-outer-name",
     ]
+    ignore-paths = ["^./tmp.*$", "^./tests/.*", "^./docs/.*", "^./.venv/.*"]
