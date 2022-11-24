@@ -22,6 +22,7 @@ BASE_DIR = Path(__file__).parent.parent.absolute()
 
 CONFIG_DIR = Path(BASE_DIR, "configs")
 DATA_DIR = Path(BASE_DIR, "data")
+SRC_DIR = Path(BASE_DIR, "src")
 STORES_DIR = Path(BASE_DIR, "stores")
 
 ## Local stores
@@ -34,6 +35,7 @@ WANDB_DIR = Path(STORES_DIR, "wandb")
 
 ## Create dirs
 CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+SRC_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 STORES_DIR.mkdir(parents=True, exist_ok=True)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
