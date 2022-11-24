@@ -41,24 +41,23 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         self,
         pipeline_config: PipelineConfig,
         model: nn.Module,
-        model_artifacts_path: Union[str, Path],
         wandb_run=None,
         early_stopping=None,
         callbacks: List[Callback] = None,
-        # under the hood map to torchmetrics?
         metrics: Union[MetricCollection, List[str]] = None,
     ):
         # Set params
         self.pipeline_config = pipeline_config
         self.params = self.pipeline_config.global_train_params
         self.model = model
-        self.model_path = model_artifacts_path
+        self.model_artifacts_path = pipeline_config.stores.artifacts_dir
         self.device = self.pipeline_config.device
 
         self.wandb_run = wandb_run
         self.early_stopping = early_stopping
         self.callbacks = callbacks
         self.metrics = metrics
+        # TODO: if isinstance(metrics, list): convert to MetricCollection
 
         self.logger = init_logger(
             log_file=Path.joinpath(
@@ -263,8 +262,8 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                         # TODO: Overwrite model saving whenever a better score is found. Currently this part is clumsy because we need to shift it to the else clause if we are monitoring min metrics. Do you think it is a good idea to put this chunk in save_model_artifacts instead?
 
                         saved_model_path = Path(
-                            self.model_path,
-                            f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}.pt",
+                            self.model_artifacts_path,
+                            f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}_epoch{_epoch}.pt",
                         )
                         self.save_model_artifacts(
                             saved_model_path,
@@ -273,7 +272,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                             self.valid_history_dict["valid_preds"],
                             self.valid_history_dict["valid_probs"],
                         )
-                        #  model_path = Path(wandb.run.dir, "model.pt").absolute().__str__()
+                        #  model_artifacts_path = Path(wandb.run.dir, "model.pt").absolute().__str__()
                         # self.wandb_run.save(saved_model_path.__str__())
                         # TODO: Temporary workaround for Windows to save wandb files by copying to the local directory which will auto sync later. https://github.com/wandb/client/issues/1370
                         # shutil.copy(
@@ -319,10 +318,12 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             callback.on_trainer_end(self)
         ########################## Load Best Model ######################################
         # Load current checkpoint so we can get model's oof predictions, often in the form of probabilities.
+        # FIXME: f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}_epoch{_epoch}.pt"
+        # is quite hardcoded and need to be in sync with save.
         curr_fold_best_checkpoint = self.load(
             Path(
-                self.model_path,
-                f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}.pt",
+                self.model_artifacts_path,
+                f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}_epoch{_epoch}.pt",
             )
         )
         ########################## End of Load Best Model ###############################

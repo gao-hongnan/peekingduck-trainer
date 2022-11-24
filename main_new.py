@@ -341,7 +341,6 @@ def train_mnist(debug: bool = False):
     trainer = Trainer(
         pipeline_config=pipeline_config,
         model=model,
-        model_artifacts_path=pipeline_config.stores.artifacts_dir,
         callbacks=[History(), MetricMeter()],
         # wandb_run=wandb_run,
     )
