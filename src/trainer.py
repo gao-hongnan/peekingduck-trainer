@@ -1,22 +1,19 @@
-import os
-import shutil
+"""Trainer class for training and validating models."""
 import time
+from collections import defaultdict
 from pathlib import Path
-from typing import DefaultDict, Dict, Union, Any, List
-from torch.utils.data import DataLoader, Dataset, Subset
+from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
 import torch
-from torch import nn
-
+from torch.utils.data import DataLoader
+from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
-from torchmetrics import MetricCollection, Accuracy, Precision, Recall, AUROC
-from src import model
-from configs.global_params import PipelineConfig
-from configs.config import init_logger
-from src.callbacks.callback import Callback
-from collections import defaultdict
-from src.metrics import metric
 
+from configs.config import init_logger
+from configs.global_params import PipelineConfig
+from src.callbacks.callback import Callback
+from src.model import Model
 from src.utils import general_utils
 
 
@@ -40,12 +37,22 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
     def __init__(
         self,
         pipeline_config: PipelineConfig,
-        model: nn.Module,
+        model: Model,
         wandb_run=None,
         early_stopping=None,
         callbacks: List[Callback] = None,
         metrics: Union[MetricCollection, List[str]] = None,
-    ):
+    ) -> None:
+        """Initialize the trainer.
+
+        history = {"train_loss": [...], "valid_loss": [...], # save all epoch
+                    "train_acc": [...], "valid_acc": [...], # save all epoch
+                    "train_auroc": [...], "valid_auroc": [...], # save all epoch
+                    "train_logits": [...], "valid_logits": [...], # save only best epoch?
+                    "train_preds": [...], "valid_preds": [...], # save only best epoch?
+                    "train_probs": [...], "valid_probs": [...], # save only best epoch?
+                    }
+        """
         # Set params
         self.pipeline_config = pipeline_config
         self.params = self.pipeline_config.global_train_params
@@ -72,7 +79,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         y_trues: torch.Tensor,
         y_preds: torch.Tensor,
         y_probs: torch.Tensor,
-        mode: str = "valid",
+        # mode: str = "valid",
     ):
         """[summary]
         # https://ghnreigns.github.io/reighns-ml-website/supervised_learning/classification/breast_cancer_wisconsin/Stage%206%20-%20Modelling%20%28Preprocessing%20and%20Spot%20Checking%29/
@@ -84,43 +91,13 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         Returns:
             [type]: [description]
         """
-        torchmetrics_accuracy = metric.accuracy_score_torch(
-            y_trues,
-            y_preds,
-            num_classes=self.params.num_classes,
-            threshold=0.5,
-        )
 
-        auroc_dict = metric.multiclass_roc_auc_score_torch(
-            y_trues,
-            y_probs,
-            num_classes=self.params.num_classes,
-            pipeline_config=self.pipeline_config,
-        )
-
-        _auroc_all_classes, macro_auc = (
-            auroc_dict["auroc_per_class"],
-            auroc_dict["macro_auc"],
-        )
-
-        # TODO: To check robustness of the code for confusion matrix.
-        # macro_cm = metrics.tp_fp_tn_fn_binary(
-        #     y_true=y_trues, y_prob=y_probs, class_labels=[0, 1, 2, 3, 4]
-        # )
-
-        metrics_collection = MetricCollection(
-            [Accuracy(num_classes=10), AUROC(num_classes=10, average="macro")]
-        )
-        self.train_metrics = metrics_collection.clone(prefix="train_")
-        self.valid_metrics = metrics_collection.clone(prefix="val_")
-        # print(f"accuracy: {self.train_metrics(y_probs, y_trues.flatten())}")
-        # print(f"macro_auroc: {self.train_metrics(y_probs,y_trues)}")
-        # print(f"accuracy: {self.valid_metrics(y_probs,y_trues)}")
-        print(f"macro_auroc: {self.valid_metrics(y_probs,y_trues.flatten())}")
-        return {
-            f"{mode}_accuracy": torchmetrics_accuracy,
-            f"{mode}_macro_auroc": macro_auc,
-        }
+        self.train_metrics = self.metrics.clone(prefix="train_")
+        self.valid_metrics = self.metrics.clone(prefix="val_")
+        train_metrics_results = self.train_metrics(y_probs, y_trues.flatten())
+        valid_metrics_results = self.valid_metrics(y_probs, y_trues.flatten())
+        print(f"valid metrics: {valid_metrics_results}")
+        return train_metrics_results, valid_metrics_results
 
     @staticmethod
     def get_lr(optimizer: torch.optim) -> float:
@@ -136,7 +113,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
 
     def run(self):
         self.on_trainer_start()
-        self.fit()
+        # self.fit()
         self.on_trainer_end()
 
     def initialize(self) -> None:
@@ -161,7 +138,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         # list to contain various train metrics
         # TODO: how to add more metrics? wandb log too. Maybe save to model artifacts?
         self.monitored_metric = {
-            "metric_name": "valid_accuracy",
+            "metric_name": "val_Accuracy",
             "metric_score": None,
             "mode": "max",
         }
@@ -192,6 +169,12 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
 
     def on_fit_end(self) -> None:
         """Called AFTER fit ends."""
+        print(self.train_batch_dict)
+        print(self.valid_batch_dict)
+        print(self.train_epoch_dict)
+        print(self.valid_epoch_dict)
+        print(self.train_history_dict)
+        print(self.valid_history_dict)
         general_utils.free_gpu_memory(
             self.optimizer,
             self.scheduler,
@@ -213,7 +196,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         self,
         train_loader: DataLoader,
         valid_loader: DataLoader,
-        fold: int = None,
+        fold: Optional[int] = None,
     ):
         """Fit the model."""
         self.on_fit_start(fold=fold)
@@ -468,8 +451,8 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             torch.vstack(valid_preds),
             torch.vstack(valid_probs),
         )
-        valid_metrics_dict = self.get_classification_metrics(
-            valid_trues, valid_preds, valid_probs, mode="valid"
+        _, valid_metrics_dict = self.get_classification_metrics(
+            valid_trues, valid_preds, valid_probs
         )
 
         self.invoke_callbacks("on_valid_loader_end")
@@ -482,8 +465,8 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             f"\n[RESULT]: Validation. Epoch {epoch}:"
             f"\nAvg Val Summary Loss:"
             f"\n{self.valid_epoch_dict['valid_loss']:.3f}"
-            f"\nAvg Val Accuracy: {valid_metrics_dict['valid_accuracy']:.3f}"
-            f"\nAvg Val Macro AUROC: {valid_metrics_dict['valid_macro_auroc']:.3f}"
+            f"\nAvg Val Accuracy: {valid_metrics_dict['val_Accuracy']:.3f}"
+            f"\nAvg Val Macro AUROC: {valid_metrics_dict['val_AUROC']:.3f}"
             f"\nTime Elapsed: {valid_elapsed_time}\n"
         )
 

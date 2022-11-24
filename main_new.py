@@ -14,7 +14,14 @@ from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter
-
+from torchmetrics import (
+    MetricCollection,
+    Accuracy,
+    Precision,
+    Recall,
+    AUROC,
+)
+from torchmetrics.classification import MulticlassCalibrationError
 from src import (
     dataset,
 )
@@ -332,15 +339,27 @@ def train_steel_defect(debug: bool = True):
 
 def train_mnist(debug: bool = False):
     pipeline_config = mnist_params.PipelineConfig()
+    num_classes = pipeline_config.global_train_params.num_classes  # 10
 
     dm = MNISTDataModule(pipeline_config)
     dm.prepare_data()
 
     model = MNISTModel(pipeline_config).to(pipeline_config.device)
-
+    metrics_collection = MetricCollection(
+        [
+            Accuracy(num_classes=num_classes),
+            Precision(num_classes=num_classes),
+            Recall(num_classes=num_classes),
+            AUROC(num_classes=num_classes, average="macro"),
+            MulticlassCalibrationError(
+                num_classes=num_classes
+            ),  # similar to brier loss
+        ]
+    )
     trainer = Trainer(
         pipeline_config=pipeline_config,
         model=model,
+        metrics=metrics_collection,
         callbacks=[History(), MetricMeter()],
         # wandb_run=wandb_run,
     )
@@ -356,23 +375,16 @@ def train_mnist(debug: bool = False):
         train_loader = dm.train_dataloader()
         valid_loader = dm.valid_dataloader()
         _ = trainer.fit(train_loader, valid_loader, fold=None)
-        print(trainer.history)
-        print(trainer.history["valid_probs"][0].shape)
-        print(trainer.history["valid_probs"][1].shape)
+        history = trainer.history
+        print(history.keys())
+        print(history["valid_loss"])
+        print(history["val_Accuracy"])
+        print(history["val_AUROC"])
+        # print(trainer.history["valid_probs"][0].shape)
+        # print(trainer.history["valid_probs"][1].shape)
 
 
 if __name__ == "__main__":
     general_utils.seed_all(1992)
     # train_steel_defect(debug=True)
     train_mnist(debug=False)
-    # on_trainer_start
-    # on_fit_start
-    # on_epoch_start
-    # on_loader_start
-    # on_batch_start
-    # on_batch_end
-    # on_loader_end # cleanup?
-    # on_epoch_end
-    # on_fit_end
-    # decouple my trainer class to above
-    # add 1 callback to see if it works.

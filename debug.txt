@@ -102,3 +102,8 @@ Time Elapsed: 00:00:01
 Validation valid_accuracy improved from 0.9524000287055969 to 0.9614999890327454
 2022-11-21 12:49:04: 
 Saving model with best valid valid_accuracy score: 0.9614999890327454
+
+
+MNIST
+
+'valid_accuracy': [tensor(0.1641), tensor(0.3063), tensor(0.3375)], 'valid_macro_auroc': [tensor(0.7641), tensor(0.8573), tensor(0.8918)]})
