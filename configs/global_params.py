@@ -119,7 +119,7 @@ class Stores:
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
 
 
-@dataclass
+@dataclass(frozen=False, init=True)
 class CriterionParams:
     """A class to track loss function parameters."""
 
@@ -147,7 +147,7 @@ class CriterionParams:
     )
 
 
-@dataclass
+@dataclass(frozen=False, init=True)
 class OptimizerParams:
     """A class to track optimizer parameters."""
 
@@ -164,7 +164,7 @@ class OptimizerParams:
     )
 
 
-@dataclass
+@dataclass(frozen=False, init=True)
 class SchedulerParams:
     """A class to track Scheduler Params."""
 
@@ -198,13 +198,14 @@ class GlobalTrainParams:
     classification_type: str = "multiclass"
 
 
+@dataclass(frozen=False, init=True)
 class CallbackParams:
     """Class to keep track of the callback parameters."""
 
     callbacks: List[str]  # = ["EarlyStopping", "ModelCheckpoint", "LRScheduler"]
 
 
-@dataclass
+@dataclass(frozen=False, init=True)
 class PipelineConfig:
     """The pipeline configuration class."""
 
