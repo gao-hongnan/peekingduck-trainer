@@ -203,6 +203,12 @@ class GlobalTrainParams:
     model_name: str = ModelParams().model_name
     num_classes: int = 2
     classification_type: str = "multiclass"
+    monitored_metric: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "metric_name": "val_Accuracy",
+            "mode": "max",
+        }
+    )
 
 
 @dataclass(frozen=False, init=True)
