@@ -10,10 +10,11 @@ import torch
 
 from tqdm.auto import tqdm
 
-from src import metrics, model
+from src import model
 from configs.global_params import PipelineConfig
 from configs.config import init_logger
 from src.callbacks import callback
+from src.metrics import metric
 from src.utils import general_utils
 
 logs_dir = PipelineConfig.stores.logs_dir
@@ -193,14 +194,14 @@ class Trainer:
         """
         # TODO: To implement Ian's Results class here so that we can return as per the following link: https://ghnreigns.github.io/reighns-ml-website/supervised_learning/classification/breast_cancer_wisconsin/Stage%206%20-%20Modelling%20%28Preprocessing%20and%20Spot%20Checking%29/
         # TODO: To think whether include num_classes, threshold etc in the arguments.
-        torchmetrics_accuracy = metrics.accuracy_score_torch(
+        torchmetrics_accuracy = metric.accuracy_score_torch(
             y_trues,
             y_preds,
             num_classes=self.params.num_classes,
             threshold=0.5,
         )
 
-        auroc_dict = metrics.multiclass_roc_auc_score_torch(
+        auroc_dict = metric.multiclass_roc_auc_score_torch(
             y_trues,
             y_probs,
             num_classes=self.params.num_classes,
@@ -440,7 +441,7 @@ class Trainer:
     ) -> Dict[str, float]:
         """Train one epoch of the model."""
 
-        metric_monitor = metrics.MetricMonitor()
+        metric_monitor = metric.MetricMonitor()
 
         # set to train mode
         self.model.train()
@@ -518,7 +519,7 @@ class Trainer:
         """
 
         self.model.eval()  # set to eval mode
-        metric_monitor = metrics.MetricMonitor()
+        metric_monitor = metric.MetricMonitor()
         average_cumulative_valid_loss: float = 0.0
         valid_bar = tqdm(valid_loader)
 

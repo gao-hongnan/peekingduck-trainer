@@ -33,7 +33,7 @@ class MetricMeter(Callback):
         self.float_precision = float_precision
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         """To check PyTorch's code for resetting the metric monitor."""
         self.metrics_dict = defaultdict(
             lambda: {
@@ -63,7 +63,7 @@ class MetricMeter(Callback):
     def on_valid_batch_end(self, trainer) -> None:
         self._update("valid_loss", trainer.valid_batch_dict["valid_loss"])
 
-    def _update(self, metric_name, metric_score):
+    def _update(self, metric_name, metric_score) -> None:
         """To check PyTorch's code for updating the loss meter.
         Args:
             metric_name (_type_): _description_
@@ -77,7 +77,7 @@ class MetricMeter(Callback):
             metric["cumulative_metric_score"] / metric["cumulative_count"]
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return " | ".join(
             [
                 "{metric_name}: {avg:.{float_precision}f}".format(

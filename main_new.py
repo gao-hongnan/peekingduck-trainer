@@ -17,10 +17,8 @@ from src.callbacks.metrics_meter import MetricMeter
 
 from src import (
     dataset,
-    # inference,
-    # lr_finder,
-    metrics,
 )
+from src.metrics import metric
 from src.trainer import Trainer
 from src.dataset import ImageClassificationDataModule, MNISTDataModule
 from src.model import ImageClassificationModel, MNISTModel
@@ -298,7 +296,7 @@ def train_loop(pipeline_config: global_params.PipelineConfig, *args, **kwargs):
         )
         df_oof = pd.concat([df_oof, _df_oof])
 
-    cv_mean_d, cv_std_d = metrics.calculate_cv_metrics(df_oof)
+    cv_mean_d, cv_std_d = metric.calculate_cv_metrics(df_oof)
     main_logger.info(f"\nMEAN CV: {cv_mean_d}\nSTD CV: {cv_std_d}")
 
     df_oof.to_csv(Path(pipeline_config.stores.artifacts_dir, "oof.csv"), index=False)
@@ -344,7 +342,6 @@ def train_mnist(debug: bool = False):
         pipeline_config=pipeline_config,
         model=model,
         model_artifacts_path=pipeline_config.stores.artifacts_dir,
-        device=device,
         callbacks=[History(), MetricMeter()],
         # wandb_run=wandb_run,
     )

@@ -6,14 +6,16 @@ from typing import DefaultDict, Dict, Union, Any, List
 from torch.utils.data import DataLoader, Dataset, Subset
 import numpy as np
 import torch
+from torch import nn
 
 from tqdm.auto import tqdm
 from torchmetrics import MetricCollection, Accuracy, Precision, Recall, AUROC
-from src import metrics, model
+from src import model
 from configs.global_params import PipelineConfig
 from configs.config import init_logger
 from src.callbacks.callback import Callback
 from collections import defaultdict
+from src.metrics import metric
 
 from src.utils import general_utils
 
@@ -38,23 +40,25 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
     def __init__(
         self,
         pipeline_config: PipelineConfig,
-        model,
+        model: nn.Module,
         model_artifacts_path: Union[str, Path],
-        device=torch.device("cpu"),
         wandb_run=None,
         early_stopping=None,
         callbacks: List[Callback] = None,
+        # under the hood map to torchmetrics?
+        metrics: Union[MetricCollection, List[str]] = None,
     ):
         # Set params
         self.pipeline_config = pipeline_config
         self.params = self.pipeline_config.global_train_params
         self.model = model
         self.model_path = model_artifacts_path
-        self.device = device
+        self.device = self.pipeline_config.device
 
         self.wandb_run = wandb_run
         self.early_stopping = early_stopping
         self.callbacks = callbacks
+        self.metrics = metrics
 
         self.logger = init_logger(
             log_file=Path.joinpath(
@@ -72,6 +76,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         mode: str = "valid",
     ):
         """[summary]
+        # https://ghnreigns.github.io/reighns-ml-website/supervised_learning/classification/breast_cancer_wisconsin/Stage%206%20-%20Modelling%20%28Preprocessing%20and%20Spot%20Checking%29/
         Args:
             y_trues (torch.Tensor): dtype=[torch.int64], shape=(num_samples, 1); (May be float if using BCEWithLogitsLoss)
             y_preds (torch.Tensor): dtype=[torch.int64], shape=(num_samples, 1);
@@ -80,17 +85,14 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         Returns:
             [type]: [description]
         """
-
-        # TODO: To implement Ian's Results class here so that we can return as per the following link: https://ghnreigns.github.io/reighns-ml-website/supervised_learning/classification/breast_cancer_wisconsin/Stage%206%20-%20Modelling%20%28Preprocessing%20and%20Spot%20Checking%29/
-        # TODO: To think whether include num_classes, threshold etc in the arguments.
-        torchmetrics_accuracy = metrics.accuracy_score_torch(
+        torchmetrics_accuracy = metric.accuracy_score_torch(
             y_trues,
             y_preds,
             num_classes=self.params.num_classes,
             threshold=0.5,
         )
 
-        auroc_dict = metrics.multiclass_roc_auc_score_torch(
+        auroc_dict = metric.multiclass_roc_auc_score_torch(
             y_trues,
             y_probs,
             num_classes=self.params.num_classes,
