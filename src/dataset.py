@@ -25,7 +25,7 @@ from torchvision.datasets import MNIST
 
 from configs.global_params import PipelineConfig
 from src.augmentations import ImageClassificationTransforms
-from src.utils import (
+from src.utils.general_utils import (
     create_dataframe_with_image_info,
     download_to,
     extract_file,
@@ -85,26 +85,27 @@ class ImageClassificationDataset(Dataset):
         """Check the shapes of X and y, for eg channels first."""
         raise NotImplementedError
 
-    def apply_image_transforms(self, image: torch.Tensor) -> torch.Tensor:
+    def apply_image_transforms(
+        self, image: torch.Tensor, dtype: torch.dtype = torch.float32
+    ) -> torch.Tensor:
         """Apply transforms to the image."""
         if self.transforms and isinstance(self.transforms, A.Compose):
             image = self.transforms(image=image)["image"]
         elif self.transforms and isinstance(self.transforms, T.Compose):
             image = self.transforms(image)
         else:
-            image = torch.from_numpy(image).permute(2, 0, 1)  # float
-        return image
+            image = torch.from_numpy(image).permute(2, 0, 1)  # float32
+        return torch.tensor(image, dtype=dtype)
 
     # pylint: disable=no-self-use # not yet!
     def apply_target_transforms(
-        self, target: torch.Tensor, dtype=torch.long
+        self, target: torch.Tensor, dtype: torch.dtype = torch.long
     ) -> torch.Tensor:
         """Apply transforms to the target.
         This is useful for tasks such as segmentation object detection
         where targets are in the form of bounding boxes, segmentation masks etc.
         """
-        # FIXME: recall BCEWithLogitsLoss expects a target.float()
-        print(type(dtype))
+        # FIXME: recall BCEWithLogitsLoss expects a target.float() and not target.long()
         return torch.tensor(target, dtype=dtype)
 
     def __getitem__(

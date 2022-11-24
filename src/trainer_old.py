@@ -10,10 +10,11 @@ import torch
 
 from tqdm.auto import tqdm
 
-from src import metrics, model, utils
+from src import metrics, model
 from configs.global_params import PipelineConfig
 from configs.config import init_logger
 from src.callbacks import callback
+from src.utils import general_utils
 
 logs_dir = PipelineConfig.stores.logs_dir
 # TODO: RUN ID should vary
@@ -422,7 +423,7 @@ class Trainer:
         ########################## End of Load Best Model ###############################
 
         ######################### Delete Optimizer and Scheduler ########################
-        utils.free_gpu_memory(
+        general_utils.free_gpu_memory(
             self.optimizer,
             self.scheduler,
             valid_trues,

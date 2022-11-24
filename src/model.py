@@ -21,7 +21,7 @@ import torchvision
 from torch import nn
 
 from configs.global_params import PipelineConfig
-from src.utils import seed_all
+from src.utils.general_utils import seed_all
 
 
 class Model(ABC, nn.Module):

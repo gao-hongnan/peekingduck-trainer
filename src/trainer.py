@@ -9,11 +9,13 @@ import torch
 
 from tqdm.auto import tqdm
 from torchmetrics import MetricCollection, Accuracy, Precision, Recall, AUROC
-from src import metrics, model, utils
+from src import metrics, model
 from configs.global_params import PipelineConfig
 from configs.config import init_logger
 from src.callbacks.callback import Callback
 from collections import defaultdict
+
+from src.utils import general_utils
 
 
 def get_sigmoid_softmax(
@@ -189,7 +191,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
 
     def on_fit_end(self) -> None:
         """Called AFTER fit ends."""
-        utils.free_gpu_memory(
+        general_utils.free_gpu_memory(
             self.optimizer,
             self.scheduler,
             self.valid_history_dict["valid_trues"],

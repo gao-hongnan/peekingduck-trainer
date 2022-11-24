@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import torch
-from src.utils import generate_uuid4
+from src.utils.general_utils import generate_uuid4
 
 from configs import config
 

@@ -20,15 +20,11 @@ from src import (
     # inference,
     # lr_finder,
     metrics,
-    # models,
-    # plot,
-    # prepare,
-    # transformation,
-    utils,
 )
 from src.trainer import Trainer
 from src.dataset import ImageClassificationDataModule, MNISTDataModule
 from src.model import ImageClassificationModel, MNISTModel
+from src.utils import general_utils
 
 
 # BASE_DIR = Path(__file__).parent.parent.absolute().__str__()
@@ -282,9 +278,9 @@ def train_one_fold(
         )
 
         wandb_run.log({"gradcam_table": gradcam_table})
-        utils.free_gpu_memory(gradcam_table)
+        general_utils.free_gpu_memory(gradcam_table)
 
-    utils.free_gpu_memory(model)
+    general_utils.free_gpu_memory(model)
     wandb_run.finish()  # Finish the run to start next fold.
 
     return df_oof
@@ -370,7 +366,7 @@ def train_mnist(debug: bool = False):
 
 
 if __name__ == "__main__":
-    utils.seed_all(1992)
+    general_utils.seed_all(1992)
     # train_steel_defect(debug=True)
     train_mnist(debug=False)
     # on_trainer_start

@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 import torch
 
 from configs import config
-from src.utils import generate_uuid4
+from src.utils.general_utils import generate_uuid4
 
 
 @dataclass(frozen=False, init=True)
