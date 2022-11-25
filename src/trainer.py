@@ -16,7 +16,7 @@ from src.callbacks.callback import Callback
 from src.model import Model
 from src.utils import general_utils
 
-
+# TODO: clean up val vs valid naming confusions.
 def get_sigmoid_softmax(
     pipeline_config,
 ) -> Union[torch.nn.Sigmoid, torch.nn.Softmax]:
@@ -44,6 +44,15 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         metrics: Union[MetricCollection, List[str]] = None,
     ) -> None:
         """Initialize the trainer.
+        TODO:
+        1. state = {"model": ..., "optimizer": ...} Torchflare's state is equivalent
+        to our pipeline_config, but his holds callable as values.
+
+        monitored_metric = {
+            "metric_name": "val_Accuracy",
+            "metric_score": None,
+            "mode": "max",
+        }
 
         history = {"train_loss": [...], "valid_loss": [...], # save all epoch
                     "train_acc": [...], "valid_acc": [...], # save all epoch
@@ -57,7 +66,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         self.pipeline_config = pipeline_config
         self.params = self.pipeline_config.global_train_params
         self.model = model
-        self.model_artifacts_path = pipeline_config.stores.artifacts_dir
+        self.model_artifacts_dir = pipeline_config.stores.model_artifacts_dir
         self.device = self.pipeline_config.device
 
         self.wandb_run = wandb_run
@@ -135,19 +144,16 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         else:
             self.scaler = None
 
-        # list to contain various train metrics
-        # TODO: how to add more metrics? wandb log too. Maybe save to model artifacts?
-        self.monitored_metric = {
-            "metric_name": "val_Accuracy",
-            "metric_score": None,
-            "mode": "max",
-        }
+        self.monitored_metric = (
+            self.pipeline_config.global_train_params.monitored_metric
+        )
         # Metric to optimize, either min or max.
         self.best_valid_score = (
             -np.inf if self.monitored_metric["mode"] == "max" else np.inf
         )
         self.patience_counter = self.params.patience  # Early Stopping Counter
-        self.history = defaultdict(list)
+        self.current_epoch = 1
+        self.current_fold = None
         self.train_epoch_dict = {}
         self.valid_epoch_dict = {}
         self.train_batch_dict = {}
@@ -169,12 +175,12 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
 
     def on_fit_end(self) -> None:
         """Called AFTER fit ends."""
-        print(self.train_batch_dict)
+        # print(self.train_batch_dict)
         print(self.valid_batch_dict)
-        print(self.train_epoch_dict)
+        # print(self.train_epoch_dict)
         print(self.valid_epoch_dict)
-        print(self.train_history_dict)
-        print(self.valid_history_dict)
+        # print(self.train_history_dict)
+        # print(self.valid_history_dict)
         general_utils.free_gpu_memory(
             self.optimizer,
             self.scheduler,
@@ -245,26 +251,17 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                         # TODO: Overwrite model saving whenever a better score is found. Currently this part is clumsy because we need to shift it to the else clause if we are monitoring min metrics. Do you think it is a good idea to put this chunk in save_model_artifacts instead?
 
                         saved_model_path = Path(
-                            self.model_artifacts_path,
+                            self.model_artifacts_dir,
                             f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}_epoch{_epoch}.pt",
                         )
-                        self.save_model_artifacts(
-                            saved_model_path,
-                            self.valid_history_dict["valid_trues"],
-                            self.valid_history_dict["valid_logits"],
-                            self.valid_history_dict["valid_preds"],
-                            self.valid_history_dict["valid_probs"],
-                        )
-                        #  model_artifacts_path = Path(wandb.run.dir, "model.pt").absolute().__str__()
-                        # self.wandb_run.save(saved_model_path.__str__())
-                        # TODO: Temporary workaround for Windows to save wandb files by copying to the local directory which will auto sync later. https://github.com/wandb/client/issues/1370
-                        # shutil.copy(
-                        #     saved_model_path.__str__(),
-                        #     os.path.join(
-                        #         self.wandb_run.dir,
-                        #         f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}.pt",
-                        #     ),
+                        # self.save_model_artifacts(
+                        #     saved_model_path,
+                        #     self.valid_history_dict["valid_trues"],
+                        #     self.valid_history_dict["valid_logits"],
+                        #     self.valid_history_dict["valid_preds"],
+                        #     self.valid_history_dict["valid_probs"],
                         # )
+                        # TODO: see my wandb run save from siim
 
                         self.logger.info(
                             f"\nSaving model with best valid {self.monitored_metric['metric_name']} score: {self.best_valid_score}\n"
@@ -295,6 +292,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                 else:
                     self.scheduler.step()
 
+            self.current_epoch += 1
             ########################## End of Scheduler #################################
         # here is finish fitting, TODO: whether to call it on train end or on fit end?
         for callback in self.callbacks:
@@ -305,10 +303,12 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         # is quite hardcoded and need to be in sync with save.
         curr_fold_best_checkpoint = self.load(
             Path(
-                self.model_artifacts_path,
+                self.model_artifacts_dir,
                 f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}_epoch{_epoch}.pt",
             )
         )
+        print(f"checking checkpoint: = {curr_fold_best_checkpoint.keys()}")
+        print(curr_fold_best_checkpoint)
         ########################## End of Load Best Model ###############################
 
         self.on_fit_end()
@@ -399,8 +399,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                 valid_preds (np.ndarray): The predicted labels for each validation set. shape = (num_samples, 1)
                 valid_probs (np.ndarray): The predicted probabilities for each validation set. shape = (num_samples, num_classes)
         """
-        ########################### Start of Validation #############################
-
         val_start_time = time.time()  # start time for validation
 
         self.model.eval()  # set to eval mode
@@ -469,7 +467,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             f"\nAvg Val Macro AUROC: {valid_metrics_dict['val_AUROC']:.3f}"
             f"\nTime Elapsed: {valid_elapsed_time}\n"
         )
-
+        # here self.valid_epoch_dict only has valid_loss, we update the rest
         self.valid_epoch_dict.update(
             {
                 "valid_trues": valid_trues,
@@ -478,8 +476,9 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                 "valid_probs": valid_probs,
             }
         )
-
+        self.valid_epoch_dict.update(valid_metrics_dict)
         # temporary stores current valid epochs info
+        # FIXME: so now valid epoch dict and valid history dict are the same lol.
         self.valid_history_dict = {**self.valid_epoch_dict, **valid_metrics_dict}
 
         # TODO: after valid epoch ends, for example, we need to call
@@ -616,7 +615,3 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         )
         loss = loss_fn(y_logits, y_true)
         return loss
-
-
-class PKDTrainer:
-    """Trainer class for PKD pipeline."""
