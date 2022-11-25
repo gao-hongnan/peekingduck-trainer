@@ -1,6 +1,5 @@
 """Trainer class for training and validating models."""
 import time
-from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -11,19 +10,16 @@ from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
 
 from configs.config import init_logger
-from configs.global_params import PipelineConfig
+from configs.base_params import PipelineConfig
 from src.callbacks.callback import Callback
 from src.model import Model
 from src.utils import general_utils
 
 # TODO: clean up val vs valid naming confusions.
 def get_sigmoid_softmax(
-    pipeline_config,
+    pipeline_config: PipelineConfig,
 ) -> Union[torch.nn.Sigmoid, torch.nn.Softmax]:
-    """Get the sigmoid or softmax function.
-    Returns:
-        Union[torch.nn.Sigmoid, torch.nn.Softmax]: [description]
-    """
+    """Get the sigmoid or softmax function depending on loss function."""
     if pipeline_config.criterion_params.train_criterion_name == "BCEWithLogitsLoss":
         return getattr(torch.nn, "Sigmoid")()
 
@@ -38,7 +34,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         self,
         pipeline_config: PipelineConfig,
         model: Model,
-        wandb_run=None,
         early_stopping=None,
         callbacks: List[Callback] = None,
         metrics: Union[MetricCollection, List[str]] = None,
@@ -64,12 +59,11 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         """
         # Set params
         self.pipeline_config = pipeline_config
-        self.params = self.pipeline_config.global_train_params
+        self.train_params = self.pipeline_config.global_train_params
         self.model = model
         self.model_artifacts_dir = pipeline_config.stores.model_artifacts_dir
         self.device = self.pipeline_config.device
 
-        self.wandb_run = wandb_run
         self.early_stopping = early_stopping
         self.callbacks = callbacks
         self.metrics = metrics
@@ -108,18 +102,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         print(f"valid metrics: {valid_metrics_results}")
         return train_metrics_results, valid_metrics_results
 
-    @staticmethod
-    def get_lr(optimizer: torch.optim) -> float:
-        """Get the learning rate of the current epoch.
-        Note learning rate can be different for different layers, hence the for loop.
-        Args:
-            self.optimizer (torch.optim): [description]
-        Returns:
-            float: [description]
-        """
-        for param_group in optimizer.param_groups:
-            return param_group["lr"]
-
     def run(self):
         self.on_trainer_start()
         # self.fit()
@@ -127,8 +109,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
 
     def initialize(self) -> None:
         """Called when the trainer begins."""
-
-        # TODO: To ask if initializing the optimizer in constructor is a good idea? Should we init it outside of the class like most people do? In particular, the memory usage.
         self.optimizer = self.get_optimizer(
             model=self.model,
             optimizer_params=self.pipeline_config.optimizer_params,
@@ -138,20 +118,19 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             scheduler_params=self.pipeline_config.scheduler_params,
         )
 
-        if self.params.use_amp:
+        if self.train_params.use_amp:
             # https://pytorch.org/docs/stable/notes/amp_examples.html
             self.scaler = torch.cuda.amp.GradScaler()
         else:
             self.scaler = None
 
-        self.monitored_metric = (
-            self.pipeline_config.global_train_params.monitored_metric
-        )
+        self.monitored_metric = self.train_params.monitored_metric
+
         # Metric to optimize, either min or max.
         self.best_valid_score = (
             -np.inf if self.monitored_metric["mode"] == "max" else np.inf
         )
-        self.patience_counter = self.params.patience  # Early Stopping Counter
+        self.patience_counter = self.train_params.patience  # Early Stopping Counter
         self.current_epoch = 1
         self.current_fold = None
         self.train_epoch_dict = {}
@@ -164,12 +143,8 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
 
     def on_fit_start(self, fold: int) -> None:
         """Called AFTER fit begins."""
-        # To automatically log gradients
-        if self.wandb_run is not None:
-            self.wandb_run.watch(self.model, log_freq=100)
-
         self.logger.info(
-            f"\nTraining on Fold {fold} and using {self.params.model_name}\n"
+            f"\nTraining on Fold {fold} and using {self.train_params.model_name}\n"
         )
         self.best_valid_loss = np.inf
 
@@ -203,16 +178,13 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         train_loader: DataLoader,
         valid_loader: DataLoader,
         fold: Optional[int] = None,
-    ):
-        """Fit the model."""
+    ) -> Dict[str, Any]:
+        """Fit the model and returns the history object."""
         self.on_fit_start(fold=fold)
 
-        for _epoch in range(1, self.params.epochs + 1):
+        for _epoch in range(1, self.train_params.epochs + 1):
             self.train_one_epoch(train_loader, _epoch)
             self.valid_one_epoch(valid_loader, _epoch)
-
-            if self.wandb_run is not None:
-                self.log_metrics(_epoch, self.history)
 
             ########################## Start of Early Stopping ##########################
             ########################## Start of Model Saving ############################
@@ -248,20 +220,8 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                         self.best_valid_score = self.monitored_metric["metric_score"]
                         # Reset patience counter as we found a new best score
                         patience_counter_ = self.patience_counter
-                        # TODO: Overwrite model saving whenever a better score is found. Currently this part is clumsy because we need to shift it to the else clause if we are monitoring min metrics. Do you think it is a good idea to put this chunk in save_model_artifacts instead?
 
-                        saved_model_path = Path(
-                            self.model_artifacts_dir,
-                            f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}_epoch{_epoch}.pt",
-                        )
-                        # self.save_model_artifacts(
-                        #     saved_model_path,
-                        #     self.valid_history_dict["valid_trues"],
-                        #     self.valid_history_dict["valid_logits"],
-                        #     self.valid_history_dict["valid_preds"],
-                        #     self.valid_history_dict["valid_probs"],
-                        # )
-                        # TODO: see my wandb run save from siim
+                        # TODO: see my wandb run save from siim project
 
                         self.logger.info(
                             f"\nSaving model with best valid {self.monitored_metric['metric_name']} score: {self.best_valid_score}\n"
@@ -279,7 +239,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                         self.best_valid_score = self.monitored_metric["metric_score"]
 
             ########################## End of Early Stopping ############################
-            ########################## End of Model Saving ##############################
 
             ########################## Start of Scheduler ###############################
 
@@ -293,27 +252,13 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                     self.scheduler.step()
 
             self.current_epoch += 1
-            ########################## End of Scheduler #################################
-        # here is finish fitting, TODO: whether to call it on train end or on fit end?
-        for callback in self.callbacks:
-            callback.on_trainer_end(self)
-        ########################## Load Best Model ######################################
-        # Load current checkpoint so we can get model's oof predictions, often in the form of probabilities.
-        # FIXME: f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}_epoch{_epoch}.pt"
-        # is quite hardcoded and need to be in sync with save.
-        curr_fold_best_checkpoint = self.load(
-            Path(
-                self.model_artifacts_dir,
-                f"{self.params.model_name}_best_{self.monitored_metric['metric_name']}_fold_{fold}_epoch{_epoch}.pt",
-            )
-        )
-        print(f"checking checkpoint: = {curr_fold_best_checkpoint.keys()}")
-        print(curr_fold_best_checkpoint)
-        ########################## End of Load Best Model ###############################
 
         self.on_fit_end()
-
-        return curr_fold_best_checkpoint
+        # FIXME: here is finish fitting, whether to call it on train end or on fit end?
+        # Currently only history uses on_trainer_end.
+        for callback in self.callbacks:
+            callback.on_trainer_end(self)
+        return self.history
 
     def train_one_epoch(self, train_loader: DataLoader, epoch: int) -> None:
         """Train one epoch of the model."""
@@ -329,7 +274,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
 
         # Iterate over train batches
         for step, batch in enumerate(train_bar, start=1):
-            if self.params.mixup:
+            if self.train_params.mixup:
                 # TODO: Implement MIXUP logic. Refer here: https://www.kaggle.com/ar2017/pytorch-efficientnet-train-aug-cutmix-fmix and my https://colab.research.google.com/drive/1sYkKG8O17QFplGMGXTLwIrGKjrgxpRt5#scrollTo=5y4PfmGZubYp
                 #       MIXUP logic can be found in petfinder.
                 pass
@@ -342,16 +287,16 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             batch_size = inputs.shape[0]
 
             with torch.cuda.amp.autocast(
-                enabled=self.params.use_amp,
+                enabled=self.train_params.use_amp,
                 dtype=torch.float16,
                 cache_enabled=True,
             ):
                 logits = self.model(inputs)  # Forward pass logits
-                curr_batch_train_loss = self.train_criterion(
+                curr_batch_train_loss = self.computer_criterion(
                     targets,
                     logits,
-                    batch_size,
                     criterion_params=self.pipeline_config.criterion_params,
+                    stage="train",
                 )
             self.optimizer.zero_grad()  # reset gradients
 
@@ -425,10 +370,11 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                 y_valid_prob = get_sigmoid_softmax(self.pipeline_config)(logits)
                 y_valid_pred = torch.argmax(y_valid_prob, axis=1)
 
-                curr_batch_val_loss = self.valid_criterion(
+                curr_batch_val_loss = self.computer_criterion(
                     targets,
                     logits,
                     criterion_params=self.pipeline_config.criterion_params,
+                    stage="valid",
                 )
                 # Update loss metric, every batch is diff
                 self.valid_batch_dict["valid_loss"] = curr_batch_val_loss.item()
@@ -461,8 +407,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         )
         self.logger.info(
             f"\n[RESULT]: Validation. Epoch {epoch}:"
-            f"\nAvg Val Summary Loss:"
-            f"\n{self.valid_epoch_dict['valid_loss']:.3f}"
+            f"\nAvg Val Summary Loss: {self.valid_epoch_dict['valid_loss']:.3f}"
             f"\nAvg Val Accuracy: {valid_metrics_dict['val_Accuracy']:.3f}"
             f"\nAvg Val Macro AUROC: {valid_metrics_dict['val_AUROC']:.3f}"
             f"\nTime Elapsed: {valid_elapsed_time}\n"
@@ -484,68 +429,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         # TODO: after valid epoch ends, for example, we need to call
         # our History callback to save the metrics into a list.
         self.invoke_callbacks("on_valid_epoch_end")
-
-    def log_metrics(self, epoch: int, history: Dict[str, Union[float, np.ndarray]]):
-        """Log a scalar value to both MLflow and TensorBoard
-        Args:
-            history (Dict[str, Union[float, np.ndarray]]): A dictionary of metrics to log.
-        """
-        for metric_name, metric_values in history.items():
-            self.wandb_run.log({metric_name: metric_values[epoch - 1]}, step=epoch)
-
-    def log_weights(self, step):
-        """Log the weights of the model to both MLflow and TensorBoard.
-        # TODO: Check https://github.com/ghnreigns/reighns-mnist/tree/master/reighns_mnist
-        Args:
-            step ([type]): [description]
-        """
-        self.writer.add_histogram(
-            tag="conv1_weight",
-            values=self.model.conv1.weight.data,
-            global_step=step,
-        )
-
-    # TODO: Consider unpacking the dict returned by valid_one_epoch instead of passing in as arguments.
-    def save_model_artifacts(
-        self,
-        path: str,
-        valid_trues: torch.Tensor,
-        valid_logits: torch.Tensor,
-        valid_preds: torch.Tensor,
-        valid_probs: torch.Tensor,
-    ) -> None:
-        """Save the weight for the best evaluation metric and also the OOF scores.
-        Caution: I removed model.eval() here as this is not standard practice.
-        valid_trues -> oof_trues: np.array of shape [num_samples, 1] and represent the true labels for each sample in current fold.
-                                i.e. oof_trues.flattened()[i] = true label of sample i in current fold.
-        valid_logits -> oof_logits: np.array of shape [num_samples, num_classes] and represent the logits for each sample in current fold.
-                                i.e. oof_logits[i] = [logit_of_sample_i_in_current_fold_for_class_0, logit_of_sample_i_in_current_fold_for_class_1, ...]
-        valid_preds -> oof_preds: np.array of shape [num_samples, 1] and represent the predicted labels for each sample in current fold.
-                                i.e. oof_preds.flattened()[i] = predicted label of sample i in current fold.
-        valid_probs -> oof_probs: np.array of shape [num_samples, num_classes] and represent the probabilities for each sample in current fold. i.e. first row is the probabilities of the first class.
-                                i.e. oof_probs[i] = [probability_of_sample_i_in_current_fold_for_class_0, probability_of_sample_i_in_current_fold_for_class_1, ...]
-        """
-
-        torch.save(
-            {
-                "model_state_dict": self.model.state_dict(),
-                "optimizer_state_dict": self.optimizer.state_dict(),
-                "scheduler_state_dict": self.scheduler.state_dict(),
-                "oof_trues": valid_trues,
-                "oof_logits": valid_logits,
-                "oof_preds": valid_preds,
-                "oof_probs": valid_probs,
-            },
-            path,
-        )
-
-    @staticmethod
-    def load(path: str):
-        """Load a model checkpoint from the given path.
-        Reason for using a static method: https://stackoverflow.com/questions/70052073/am-i-using-static-method-correctly/70052107#70052107
-        """
-        checkpoint = torch.load(path, map_location=torch.device("cpu"))
-        return checkpoint
 
     @staticmethod
     def get_optimizer(
@@ -572,46 +455,39 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         )
 
     @staticmethod
-    def train_criterion(
-        y_true: torch.Tensor,
+    def computer_criterion(
+        y_trues: torch.Tensor,
         y_logits: torch.Tensor,
-        batch_size: int,
         criterion_params: Dict[str, Any],
+        stage: str,
     ) -> torch.Tensor:
         """Train Loss Function.
         Note that we can evaluate train and validation fold with different loss functions.
         The below example applies for CrossEntropyLoss.
         Args:
-            y_true ([type]): Input - N,C) where N = number of samples and C = number of classes.
-            y_logits ([type]): If containing class indices, shape (N) where each value is 0 \leq \text{targets}[i] \leq C-10≤targets[i]≤C−1
-                               If containing class probabilities, same shape as the input.
-            criterion_params (global_params.CriterionParams, optional): [description]. Defaults to CRITERION_PARAMS.criterion_params.
+            y_trues ([type]): Input - N,C) where N = number of samples and C = number of classes.
+            y_logits ([type]): If containing class indices, shape (N) where each value is
+                $0 \leq \text{targets}[i] \leq C-10≤targets[i]≤C-1$.
+                If containing class probabilities, same shape as the input.
+            stage (str): train or valid, sometimes people use different loss functions for
+                train and valid.
         """
 
-        loss_fn = getattr(torch.nn, criterion_params.train_criterion_name)(
-            **criterion_params.train_criterion_params
-        )
-
-        if criterion_params.train_criterion_name == "CrossEntropyLoss":
-            pass
-        elif criterion_params.train_criterion_name == "BCEWithLogitsLoss":
-            assert (
-                y_logits.shape[0] == y_true.shape[0] == batch_size
-            ), f"BCEWithLogitsLoss expects first dimension to be batch size {batch_size}"
-            assert (
-                y_logits.shape == y_true.shape
-            ), "BCEWithLogitsLoss inputs must be of the same shape."
-
-        loss = loss_fn(y_logits, y_true)
+        if stage == "train":
+            loss_fn = getattr(torch.nn, criterion_params.train_criterion_name)(
+                **criterion_params.train_criterion_params
+            )
+        elif stage == "valid":
+            loss_fn = getattr(torch.nn, criterion_params.valid_criterion_name)(
+                **criterion_params.valid_criterion_params
+            )
+        loss = loss_fn(y_logits, y_trues)
         return loss
 
     @staticmethod
-    def valid_criterion(
-        y_true: torch.Tensor, y_logits: torch.Tensor, criterion_params: Dict[str, Any]
-    ) -> torch.Tensor:
-        """Validation Loss Function."""
-        loss_fn = getattr(torch.nn, criterion_params.valid_criterion_name)(
-            **criterion_params.valid_criterion_params
-        )
-        loss = loss_fn(y_logits, y_true)
-        return loss
+    def get_lr(optimizer: torch.optim) -> float:
+        """Get the learning rate of optimizer for the current epoch.
+        Note learning rate can be different for different layers, hence the for loop.
+        """
+        for param_group in optimizer.param_groups:
+            return param_group["lr"]

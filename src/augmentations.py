@@ -48,7 +48,7 @@ class Transforms(ABC):
         """Get the test time augmentations."""
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        return super().__call__(*args, **kwargs)
+        """Call the transforms."""
 
 
 class ImageClassificationTransforms(Transforms):

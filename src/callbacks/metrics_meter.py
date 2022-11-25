@@ -1,24 +1,29 @@
-from src.callbacks.callback import Callback
+"""Metrics Meter Callback.
 
+Batch/Step 1: curr_batch_train_loss = 10 -> average_cumulative_train_loss = (10-0)/1 = 10
+Batch/Step 2: curr_batch_train_loss = 12 -> average_cumulative_train_loss =
+    10 + (12-10)/2 = 11 (Basically (10+12)/2=11)
+Essentially, average_cumulative_train_loss = loss over all batches / batches
+average_cumulative_train_loss += (
+    curr_batch_train_loss.detach().item() - average_cumulative_train_loss
+) / (step)
+
+Note after 1 full loop epoch,
+the model has traversed through all batches in the dataloader.
+So, the average score is the average of all batches in the dataloader.
+for eg, if train set has 1000 samples and batch size is 100,
+then the model will have traversed through 10 batches in 1 epoch.
+then the cumulative count is "step" which is 10 in this case.
+the cumulative metric score is the sum of all the metric scores of all batches.
+so add up all the metric scores of all batches and divide by the cumulative count.
+this is the average score of all batches in 1 epoch.
+"""
 from collections import defaultdict
+
+from src.callbacks.callback import Callback
 from src.trainer import Trainer
 
-# Batch/Step 1: curr_batch_train_loss = 10 -> average_cumulative_train_loss = (10-0)/1 = 10
-# Batch/Step 2: curr_batch_train_loss = 12 -> average_cumulative_train_loss = 10 + (12-10)/2 = 11 (Basically (10+12)/2=11)
-# Essentially, average_cumulative_train_loss = loss over all batches / batches
-# average_cumulative_train_loss += (
-#     curr_batch_train_loss.detach().item() - average_cumulative_train_loss
-# ) / (step)
 
-# Note after 1 full loop epoch,
-# the model has traversed through all batches in the dataloader.
-# So, the average score is the average of all batches in the dataloader.
-# for eg, if train set has 1000 samples and batch size is 100,
-# then the model will have traversed through 10 batches in 1 epoch.
-# then the cumulative count is "step" which is 10 in this case.
-# the cumulative metric score is the sum of all the metric scores of all batches.
-# so add up all the metric scores of all batches and divide by the cumulative count.
-# this is the average score of all batches in 1 epoch.
 class MetricMeter(Callback):
     """Monitor Metrics.
 
@@ -64,11 +69,7 @@ class MetricMeter(Callback):
         self._update("valid_loss", trainer.valid_batch_dict["valid_loss"])
 
     def _update(self, metric_name, metric_score) -> None:
-        """To check PyTorch's code for updating the loss meter.
-        Args:
-            metric_name (_type_): _description_
-            metric_score (_type_): _description_
-        """
+        """To check PyTorch's code for updating the loss meter."""
         metric = self.metrics_dict[metric_name]
 
         metric["cumulative_metric_score"] += metric_score
@@ -90,6 +91,7 @@ class MetricMeter(Callback):
         )
 
 
+# TODO: Should we split MetricMeter to loss and metrics separately?
 class AverageLossMeter(MetricMeter):
     """Computes and stores the average and current loss."""
 

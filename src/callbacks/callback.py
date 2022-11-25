@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 class Callback:
     """Callback base class.
 
+    TODO: Torchflare sorts the callback, maybe we should look into it.
+    This might be because some default callbacks instantiate some global attributes
+    for eg, self.model_artifacts_dir
+
     Reference:
         - https://github.com/Lightning-AI/lightning/blob/master/src/pytorch_lightning/callbacks/callback.py
         - https://github.com/Atharva-Phatak/torchflare/tree/main/torchflare

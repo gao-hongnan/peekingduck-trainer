@@ -1,16 +1,21 @@
-"""Implements Model History."""
-
+"""Implements Model History.
+NOTE:
+    1. self.history is instantiated on_trainer_start and we do not need to create
+        it in trainer anymore.
+    2. After everything, we assign self.history to trainer.history so we can call
+        trainer.history for results.
+"""
+from collections import defaultdict
+from typing import Any, DefaultDict, Dict, List
 
 from src.callbacks.callback import Callback
-from typing import Dict, Any, DefaultDict, List
 from src.trainer import Trainer
-from collections import defaultdict
 
 
 class History(Callback):
     """Class to log metrics to console and save them to a CSV file."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor class for History Class."""
         super().__init__()
         self.history: DefaultDict[str, List[Any]]

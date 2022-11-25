@@ -16,6 +16,7 @@ from configs import config, global_params, mnist_params
 from src import dataset
 from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter
+from src.callbacks.model_checkpoint import ModelCheckpoint
 from src.dataset import ImageClassificationDataModule, MNISTDataModule
 from src.metrics import metric
 from src.model import ImageClassificationModel, MNISTModel
@@ -363,7 +364,11 @@ def train_mnist(debug: bool = False):
         pipeline_config=pipeline_config,
         model=model,
         metrics=metrics_collection,
-        callbacks=[History(), MetricMeter()],
+        callbacks=[
+            History(),
+            MetricMeter(),
+            ModelCheckpoint(mode="max", metric_name="val_Accuracy"),
+        ],
     )
 
     if debug:
@@ -376,8 +381,8 @@ def train_mnist(debug: bool = False):
         dm.setup(stage="fit")
         train_loader = dm.train_dataloader()
         valid_loader = dm.valid_dataloader()
-        _ = trainer.fit(train_loader, valid_loader, fold=None)
-        history = trainer.history
+        history = trainer.fit(train_loader, valid_loader, fold=None)
+        # history = trainer.history
         print(history.keys())
         print(history["valid_loss"])
         print(history["val_Accuracy"])
