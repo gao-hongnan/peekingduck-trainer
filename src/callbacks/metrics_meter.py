@@ -23,6 +23,10 @@ from collections import defaultdict
 from src.callbacks.callback import Callback
 from src.trainer import Trainer
 
+# TODO:
+# 1. Add support for other metrics such as accuracy, precision, recall, f1, etc.
+# 2. See torchmetrics' method calls.
+
 
 class MetricMeter(Callback):
     """Monitor Metrics.

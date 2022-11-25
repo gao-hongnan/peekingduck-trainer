@@ -186,12 +186,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             self.train_one_epoch(train_loader, _epoch)
             self.valid_one_epoch(valid_loader, _epoch)
 
-            ########################## Start of Early Stopping ##########################
-            ########################## Start of Model Saving ############################
-            # TODO: Consider condensing early stopping and model saving as callbacks, it looks very long and ugly here.
-
-            # User has to choose a few metrics to monitor.
-            # Here I chose valid_loss and valid_macro_auroc.
             self.monitored_metric["metric_score"] = torch.clone(
                 self.valid_history_dict[self.monitored_metric["metric_name"]]
             ).detach()  # FIXME: one should not hardcode "valid_macro_auroc" here
@@ -238,10 +232,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                     if self.monitored_metric["metric_score"] < self.best_valid_score:
                         self.best_valid_score = self.monitored_metric["metric_score"]
 
-            ########################## End of Early Stopping ############################
-
-            ########################## Start of Scheduler ###############################
-
             if self.scheduler is not None:
                 # Special Case for ReduceLROnPlateau
                 if isinstance(
@@ -262,8 +252,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
 
     def train_one_epoch(self, train_loader: DataLoader, epoch: int) -> None:
         """Train one epoch of the model."""
-        # get current epoch's learning rate
-        # only used on training epoch
         curr_lr = self.get_lr(self.optimizer)
         train_start_time = time.time()
 
@@ -273,18 +261,13 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         train_bar = tqdm(train_loader)
 
         # Iterate over train batches
-        for step, batch in enumerate(train_bar, start=1):
-            if self.train_params.mixup:
-                # TODO: Implement MIXUP logic. Refer here: https://www.kaggle.com/ar2017/pytorch-efficientnet-train-aug-cutmix-fmix and my https://colab.research.google.com/drive/1sYkKG8O17QFplGMGXTLwIrGKjrgxpRt5#scrollTo=5y4PfmGZubYp
-                #       MIXUP logic can be found in petfinder.
-                pass
-
+        for _step, batch in enumerate(train_bar, start=1):
             # unpack - note that if BCEWithLogitsLoss, dataset should do view(-1,1) and not here.
             inputs, targets = batch
             inputs = inputs.to(self.device, non_blocking=True)
             targets = targets.to(self.device, non_blocking=True)
 
-            batch_size = inputs.shape[0]
+            _batch_size = inputs.shape[0] # unused for now
 
             with torch.cuda.amp.autocast(
                 enabled=self.train_params.use_amp,
@@ -353,7 +336,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         valid_logits, valid_trues, valid_preds, valid_probs = [], [], [], []
 
         with torch.no_grad():
-            for step, batch in enumerate(valid_bar, start=1):
+            for _step, batch in enumerate(valid_bar, start=1):
                 # unpack
                 inputs, targets = batch
                 inputs = inputs.to(self.device, non_blocking=True)
