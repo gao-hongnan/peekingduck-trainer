@@ -113,17 +113,17 @@ class Stores:
     project_name: str = "pytorch-training-pipeline"
     unique_id: str = field(default_factory=generate_uuid4)
     logs_dir: Path = field(init=False)
-    artifacts_dir: Path = field(init=False)
+    model_artifacts_dir: Path = field(init=False)
 
     def __post_init__(self) -> None:
         """Create the logs directory."""
         self.logs_dir = Path(config.LOGS_DIR) / self.project_name / self.unique_id
         self.logs_dir.mkdir(parents=True, exist_ok=True)
 
-        self.artifacts_dir = (
+        self.model_artifacts_dir = (
             Path(config.MODEL_ARTIFACTS) / self.project_name / self.unique_id
         )
-        self.artifacts_dir.mkdir(parents=True, exist_ok=True)
+        self.model_artifacts_dir.mkdir(parents=True, exist_ok=True)
 
 
 @dataclass(frozen=False, init=True)
