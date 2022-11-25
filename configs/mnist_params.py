@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional, Union
 import torch
 
 from configs import config
-from src.utils.general_utils import generate_uuid4
 from configs.base_params import AbstractPipelineConfig
+from src.utils.general_utils import generate_uuid4
 
 
 @dataclass(frozen=False, init=True)
@@ -89,7 +89,6 @@ class AugmentationParams:
 class ModelParams:
     """Class to keep track of the model parameters."""
 
-    # TODO: well know backbone models are usually from torchvision or timm.
     model_name: str = "custom"
     # adaptor: str = "torchvision/timm"
     # pretrained: bool = True

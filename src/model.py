@@ -20,7 +20,7 @@ from torchinfo.model_statistics import ModelStatistics
 import torchvision
 from torch import nn
 
-from configs.global_params import PipelineConfig
+from configs.base_params import PipelineConfig
 from src.utils.general_utils import seed_all
 
 

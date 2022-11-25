@@ -5,7 +5,7 @@ from typing import Any
 
 import torchvision.transforms as T
 
-from configs.global_params import PipelineConfig
+from configs.base_params import PipelineConfig
 
 
 class Transforms(ABC):

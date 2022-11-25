@@ -23,7 +23,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision.datasets import MNIST
 
-from configs.global_params import PipelineConfig
+from configs.base_params import PipelineConfig
 from src.augmentations import ImageClassificationTransforms
 from src.utils.general_utils import (
     create_dataframe_with_image_info,
@@ -393,7 +393,9 @@ class ImageClassificationDataModule(CustomizedDataModule):
 if __name__ == "__main__":
     seed_all(42)
 
-    pipeline_config = PipelineConfig()
+    from configs.global_params import PipelineConfig as SteelPipelineConfig
+
+    pipeline_config = SteelPipelineConfig()
     dm = ImageClassificationDataModule(pipeline_config)
     dm.prepare_data()
     dm.setup(stage="debug")

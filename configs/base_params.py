@@ -13,3 +13,8 @@ class AbstractPipelineConfig(ABC):
         """Initialize the pipeline config.
         Currently only initializes the device."""
         raise NotImplementedError
+
+
+@dataclass(frozen=False, init=True)
+class PipelineConfig(AbstractPipelineConfig):
+    """The pipeline configuration class."""

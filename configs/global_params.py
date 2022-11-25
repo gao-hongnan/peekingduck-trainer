@@ -2,16 +2,15 @@
 This file holds all the global params in the form of
 dataclasses. Eventually, these can be converted to yaml config files.
 """
-
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import torch
-from src.utils.general_utils import generate_uuid4
 
 from configs import config
 from configs.base_params import AbstractPipelineConfig
+from src.utils.general_utils import generate_uuid4
 
 
 @dataclass(frozen=False, init=True)
@@ -97,10 +96,12 @@ class AugmentationParams:
 
 @dataclass(frozen=False, init=True)
 class ModelParams:
-    """Class to keep track of the model parameters."""
+    """Class to keep track of the model parameters.
+
+    Currently model_name must be one of torchvision's model names, should
+    support timm as well."""
 
     model_name: str = "resnet18"
-    # TODO: well know backbone models are usually from torchvision or timm.
     # adaptor: str = "torchvision/timm"
     pretrained: bool = True
     num_classes: int = 2  # 2
