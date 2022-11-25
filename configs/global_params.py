@@ -11,6 +11,7 @@ import torch
 from src.utils.general_utils import generate_uuid4
 
 from configs import config
+from configs.base_params import AbstractPipelineConfig
 
 
 @dataclass(frozen=False, init=True)
@@ -219,8 +220,10 @@ class CallbackParams:
 
 
 @dataclass(frozen=False, init=True)
-class PipelineConfig:
+class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
+
+    device: str = field(init=False)
 
     data: Data = Data()
     datamodule: DataModuleParams = DataModuleParams()
@@ -232,7 +235,9 @@ class PipelineConfig:
     scheduler_params: SchedulerParams = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
 
-    device: str = "cuda" if torch.cuda.is_available() else "cpu"  # see utils.set_device
+    def __post_init__(self) -> None:
+        # see utils.set_device
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 if __name__ == "__main__":
