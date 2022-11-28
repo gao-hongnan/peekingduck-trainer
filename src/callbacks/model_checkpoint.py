@@ -105,7 +105,7 @@ class ModelCheckpoint(Callback):
         self.improvement, self.best_val = init_improvement(
             mode=self.mode, min_delta=self.eps
         )
-        # FIXME: do we need save_dir here? For now taking from model_artifacts_dir
+        # FIXME: do we need self.save_dir here? For now taking from model_artifacts_dir
         # ideally as an argument and set attribute for pipeline_configs.stores?
 
     @staticmethod

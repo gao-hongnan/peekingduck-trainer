@@ -24,11 +24,11 @@ from src.trainer import Trainer
 from src.utils import general_utils
 
 device = config.DEVICE
-logs_dir = global_params.PipelineConfig.stores.logs_dir
-main_logger = config.init_logger(
-    log_file=Path.joinpath(logs_dir, "main.log"),
-    module_name="main",
-)  # FIXME: follow trainer style logger
+# logs_dir = global_params.PipelineConfig.stores.logs_dir
+# main_logger = config.init_logger(
+#     log_file=Path.joinpath(logs_dir, "main.log"),
+#     module_name="main",
+# )  # FIXME: follow trainer style logger
 
 # shutil.copy(FILES.global_params_path, LOGS_PARAMS.LOGS_DIR_RUN_ID)
 
@@ -367,7 +367,9 @@ def train_mnist(debug: bool = False):
         callbacks=[
             History(),
             MetricMeter(),
-            ModelCheckpoint(mode="max", metric_name="val_Accuracy"),
+            ModelCheckpoint(
+                mode="max", metric_name="val_Accuracy"
+            ),  # TODO: save_dir as argument?
         ],
     )
 
