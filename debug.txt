@@ -205,3 +205,9 @@ dict_keys(['train_loss', 'valid_loss', 'valid_trues', 'valid_logits', 'valid_pre
 [2.274305510520935, 2.234328830242157, 2.1701970994472504]
 [tensor(0.1664), tensor(0.2766), tensor(0.3289)]
 [tensor(0.7661), tensor(0.8462), tensor(0.8863)]
+
+
+early stopping windows 9 epoch
+[2.274305510520935, 2.234328830242157, 2.1701970994472504, 2.079664397239685, 1.9737285286188126, 1.8784421265125275, 1.8099467486143113, 1.7688362270593643, 1.749555978178978]
+[tensor(0.1664), tensor(0.2766), tensor(0.3289), tensor(0.4180), tensor(0.5320), tensor(0.5867), tensor(0.6039), tensor(0.6141), tensor(0.6125)]
+[tensor(0.7661), tensor(0.8462), tensor(0.8863), tensor(0.9125), tensor(0.9284), tensor(0.9347), tensor(0.9389), tensor(0.9404), tensor(0.9413)]

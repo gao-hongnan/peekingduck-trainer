@@ -9,11 +9,11 @@ from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
 
-from configs.config import init_logger
+
 from configs.base_params import PipelineConfig
 from src.callbacks.callback import Callback
 from src.model import Model
-from src.utils import general_utils
+from src.utils.general_utils import free_gpu_memory, init_logger
 
 # TODO: clean up val vs valid naming confusions.
 def get_sigmoid_softmax(
@@ -30,11 +30,12 @@ def get_sigmoid_softmax(
 class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-public-methods
     """Object used to facilitate training."""
 
+    stop: bool  # from EarlyStopping
+
     def __init__(
         self,
         pipeline_config: PipelineConfig,
         model: Model,
-        early_stopping=None,
         callbacks: List[Callback] = None,
         metrics: Union[MetricCollection, List[str]] = None,
     ) -> None:
@@ -44,7 +45,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         to our pipeline_config, but his holds callable as values.
 
         monitored_metric = {
-            "metric_name": "val_Accuracy",
+            "monitor": "val_Accuracy",
             "metric_score": None,
             "mode": "max",
         }
@@ -64,7 +65,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         self.model_artifacts_dir = pipeline_config.stores.model_artifacts_dir
         self.device = self.pipeline_config.device
 
-        self.early_stopping = early_stopping
         self.callbacks = callbacks
         self.metrics = metrics
         # TODO: if isinstance(metrics, list): convert to MetricCollection
@@ -156,7 +156,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         print(self.valid_epoch_dict)
         # print(self.train_history_dict)
         # print(self.valid_history_dict)
-        general_utils.free_gpu_memory(
+        free_gpu_memory(
             self.optimizer,
             self.scheduler,
             self.valid_history_dict["valid_trues"],
@@ -187,50 +187,12 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             self.valid_one_epoch(valid_loader, _epoch)
 
             self.monitored_metric["metric_score"] = torch.clone(
-                self.valid_history_dict[self.monitored_metric["metric_name"]]
+                self.valid_history_dict[self.monitored_metric["monitor"]]
             ).detach()  # FIXME: one should not hardcode "valid_macro_auroc" here
             valid_loss = self.valid_history_dict["valid_loss"]
 
-            if self.early_stopping is not None:
-                # TODO: Implement this properly, Add save_model_artifacts here as well. Or rather, create a proper callback to reduce the complexity of code below.
-                best_score, early_stop = self.early_stopping.should_stop(
-                    curr_epoch_score=valid_loss
-                )
-                self.best_valid_loss = best_score
-
-                if early_stop:
-                    self.logger.info("Stopping Early!")
-                    break
-            else:
-
-                if valid_loss < self.best_valid_loss:
-                    self.best_valid_loss = valid_loss
-
-                if self.monitored_metric["mode"] == "max":
-                    if self.monitored_metric["metric_score"] > self.best_valid_score:
-                        self.logger.info(
-                            f"\nValidation {self.monitored_metric['metric_name']} improved from {self.best_valid_score} to {self.monitored_metric['metric_score']}"
-                        )
-                        self.best_valid_score = self.monitored_metric["metric_score"]
-                        # Reset patience counter as we found a new best score
-                        patience_counter_ = self.patience_counter
-
-                        # TODO: see my wandb run save from siim project
-
-                        self.logger.info(
-                            f"\nSaving model with best valid {self.monitored_metric['metric_name']} score: {self.best_valid_score}\n"
-                        )
-                    else:
-                        patience_counter_ -= 1
-                        self.logger.info(f"Patience Counter {patience_counter_}")
-                        if patience_counter_ == 0:
-                            self.logger.info(
-                                f"\n\nEarly Stopping, patience reached!\n\nbest valid {self.monitored_metric['metric_name']} score: {self.best_valid_score}"
-                            )
-                            break
-                else:
-                    if self.monitored_metric["metric_score"] < self.best_valid_score:
-                        self.best_valid_score = self.monitored_metric["metric_score"]
+            if self.stop:  # from early stopping
+                break  # Early Stopping
 
             if self.scheduler is not None:
                 # Special Case for ReduceLROnPlateau
@@ -267,7 +229,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             inputs = inputs.to(self.device, non_blocking=True)
             targets = targets.to(self.device, non_blocking=True)
 
-            _batch_size = inputs.shape[0] # unused for now
+            _batch_size = inputs.shape[0]  # unused for now
 
             with torch.cuda.amp.autocast(
                 enabled=self.train_params.use_amp,

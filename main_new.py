@@ -14,6 +14,7 @@ from torchmetrics.classification import MulticlassCalibrationError
 
 from configs import config, global_params, mnist_params
 from src import dataset
+from src.callbacks.early_stopping import EarlyStopping
 from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter
 from src.callbacks.model_checkpoint import ModelCheckpoint
@@ -367,9 +368,8 @@ def train_mnist(debug: bool = False):
         callbacks=[
             History(),
             MetricMeter(),
-            ModelCheckpoint(
-                mode="max", metric_name="val_Accuracy"
-            ),  # TODO: save_dir as argument?
+            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=1),
         ],
     )
 
