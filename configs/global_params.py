@@ -207,7 +207,7 @@ class GlobalTrainParams:
     classification_type: str = "multiclass"
     monitored_metric: Dict[str, Any] = field(
         default_factory=lambda: {
-            "metric_name": "val_Accuracy",
+            "monitor": "val_Accuracy",
             "mode": "max",
         }
     )

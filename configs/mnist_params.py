@@ -188,16 +188,16 @@ class GlobalTrainParams:
 
     debug: bool = False
     debug_multiplier: int = 128
-    epochs: int = 3  # 10 when not debug
+    epochs: int = 20  # 10 when not debug
     use_amp: bool = True
     mixup: bool = False
-    patience: int = 3
+    patience: int = 1
     model_name: str = "custom"
     num_classes: int = 10
     classification_type: str = "multiclass"
     monitored_metric: Dict[str, Any] = field(
         default_factory=lambda: {
-            "metric_name": "val_Accuracy",
+            "monitor": "val_Accuracy",
             "mode": "max",
         }
     )
