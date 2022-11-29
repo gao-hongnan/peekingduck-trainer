@@ -18,6 +18,7 @@ from src.callbacks.early_stopping import EarlyStopping
 from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter
 from src.callbacks.model_checkpoint import ModelCheckpoint
+from src.callbacks.wandb_logger import WandbLogger
 from src.dataset import ImageClassificationDataModule, MNISTDataModule
 from src.metrics import metric
 from src.model import ImageClassificationModel, MNISTModel
@@ -369,7 +370,13 @@ def train_mnist(debug: bool = False):
             History(),
             MetricMeter(),
             ModelCheckpoint(mode="max", monitor="val_Accuracy"),
-            EarlyStopping(mode="max", monitor="val_Accuracy", patience=1),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=2),
+            WandbLogger(
+                project="MNIST",
+                entity="reighns",
+                name="MNIST_EXP_1",
+                config=pipeline_config.all_params,
+            ),
         ],
     )
 

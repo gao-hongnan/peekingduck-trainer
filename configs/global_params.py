@@ -2,7 +2,11 @@
 This file holds all the global params in the form of
 dataclasses. Eventually, these can be converted to yaml config files.
 """
-from dataclasses import dataclass, field
+import os
+import sys
+
+sys.path.insert(1, os.getcwd())
+from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -225,6 +229,7 @@ class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
 
     device: str = field(init=False)
+    all_params: Dict[str, Any] = field(default_factory=dict)
 
     data: Data = Data()
     datamodule: DataModuleParams = DataModuleParams()
@@ -239,8 +244,13 @@ class PipelineConfig(AbstractPipelineConfig):
     def __post_init__(self) -> None:
         # see utils.set_device
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.all_params = self.to_dict()
 
 
 if __name__ == "__main__":
     datamodule = DataModuleParams()
     print(isinstance(datamodule, DataModuleParams))
+
+    pipeline_config = PipelineConfig()
+    print(pipeline_config.all_params["data"]["root_dir"])
+    print(asdict(pipeline_config).keys())

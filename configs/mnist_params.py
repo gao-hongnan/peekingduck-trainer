@@ -215,6 +215,7 @@ class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
 
     device: str = field(init=False)
+    all_params: Dict[str, Any] = field(default_factory=dict)
 
     data: Data = Data()
     datamodule: DataModuleParams = DataModuleParams()
@@ -229,3 +230,4 @@ class PipelineConfig(AbstractPipelineConfig):
     def __post_init__(self) -> None:
         # see utils.set_device
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.all_params = self.to_dict()

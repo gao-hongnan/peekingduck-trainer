@@ -34,6 +34,7 @@ class EarlyStopping(Callback):
     def __init__(
         self, mode: str, monitor: str, patience: int = 3, min_delta: float = 1e-6
     ) -> None:
+        super().__init__()
         self.mode = mode
         self.monitor = monitor
         self.patience = patience
