@@ -50,7 +50,6 @@ class ImageClassificationDataset(Dataset):
         stage: str = "train",
         **kwargs,
     ) -> None:
-        super().__init__(**kwargs)
         """Constructor for the dataset class.
 
         Note:
@@ -65,7 +64,7 @@ class ImageClassificationDataset(Dataset):
                 to apply to the images.
             stage (str): Defaults to "train". One of ['train', 'valid', 'test', 'gradcam']
         """
-        # TODO: it is hardcoded and can be put in pipeline_config to be consistent.
+        super().__init__(**kwargs)
         self.image_path = df[pipeline_config.data.image_path_col_name].values
         self.image_ids = df[pipeline_config.data.image_col_name].values
         self.targets = (
