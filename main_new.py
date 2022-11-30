@@ -371,12 +371,12 @@ def train_mnist(debug: bool = False):
             MetricMeter(),
             ModelCheckpoint(mode="max", monitor="val_Accuracy"),
             EarlyStopping(mode="max", monitor="val_Accuracy", patience=2),
-            WandbLogger(
-                project="MNIST",
-                entity="reighns",
-                name="MNIST_EXP_1",
-                config=pipeline_config.all_params,
-            ),
+            # WandbLogger(
+            #     project="MNIST",
+            #     entity="reighns",
+            #     name="MNIST_EXP_1",
+            #     config=pipeline_config.all_params,
+            # ),
         ],
     )
 
