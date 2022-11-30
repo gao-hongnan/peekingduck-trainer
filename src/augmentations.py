@@ -91,6 +91,17 @@ class ImageClassificationTransforms(Transforms):
         )
 
     @property
+    def test_transforms(self):
+        return T.Compose(
+            [
+                T.ToPILImage(),
+                T.Resize(self.image_size),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+
+    @property
     def debug_transforms(self) -> T.Compose:
         return T.Compose(
             [

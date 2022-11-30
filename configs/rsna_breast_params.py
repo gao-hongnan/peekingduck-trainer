@@ -49,7 +49,16 @@ class DataModuleParams:
 
     debug: bool = False
 
-    test_loader: Optional[Dict[str, Any]] = None
+    test_loader: Optional[Dict[str, Any]] = field(
+        default_factory=lambda: {
+            "batch_size": 32,
+            "num_workers": 0,
+            "pin_memory": True,
+            "drop_last": False,
+            "shuffle": False,
+            "collate_fn": None,
+        }
+    )
 
     debug_loader: Dict[str, Any] = field(
         default_factory=lambda: {

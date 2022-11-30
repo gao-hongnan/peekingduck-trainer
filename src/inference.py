@@ -38,7 +38,7 @@ def inference_all_folds(
 
     all_folds_probs = []
     for _fold_num, state in enumerate(state_dicts):
-        model.load_state_dict(state["model_state_dict"])
+        model.load_state_dict(state)
 
         current_fold_probs = []
 

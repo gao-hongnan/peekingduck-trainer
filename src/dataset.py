@@ -343,9 +343,20 @@ class ImageClassificationDataModule(CustomizedDataModule):
                 extension=self.pipeline_config.data.image_extension,
             )
         )
-        print(df_train.head())
 
-        # self.df = pd.read_csv(self.pipeline_config.data.data_csv)
+        df_test = pd.read_csv(self.pipeline_config.data.test_csv)
+        df_test["image_id_final"] = (
+            df_test["patient_id"].astype(str) + "_" + df_test["image_id"].astype(str)
+        )
+        df_test["image_path"] = df_test[self.pipeline_config.data.image_col_name].apply(
+            lambda x: return_filepath(
+                image_id=x,
+                folder=data_dir,
+                extension=self.pipeline_config.data.image_extension,
+            )
+        )
+        self.test_df = df_test
+
         self.train_df, self.valid_df = train_test_split(
             df_train, test_size=0.1, random_state=42
         )
@@ -372,6 +383,14 @@ class ImageClassificationDataModule(CustomizedDataModule):
                 stage="valid",
                 transforms=valid_transforms,
             )
+        elif stage == "test":
+            test_transforms = self.transforms.test_transforms
+            self.test_dataset = ImageClassificationDataset(
+                self.pipeline_config,
+                df=self.test_df,
+                stage="test",
+                transforms=test_transforms,
+            )
 
     def train_dataloader(self) -> DataLoader:
         """Train dataloader."""
@@ -393,6 +412,11 @@ class ImageClassificationDataModule(CustomizedDataModule):
     def debug_valid_dataloader(self) -> DataLoader:
         return DataLoader(
             self.debug_valid_dataset, **self.pipeline_config.datamodule.debug_loader
+        )
+
+    def test_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.test_dataset, **self.pipeline_config.datamodule.test_loader
         )
 
 
