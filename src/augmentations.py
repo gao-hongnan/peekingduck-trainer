@@ -61,6 +61,7 @@ class ImageClassificationTransforms(Transforms):
         super().__init__(pipeline_config)
 
         self.image_size = pipeline_config.augmentation.image_size
+        self.pre_center_crop = pipeline_config.augmentation.pre_center_crop
         self.mean = pipeline_config.augmentation.mean
         self.std = pipeline_config.augmentation.std
 
@@ -81,7 +82,7 @@ class ImageClassificationTransforms(Transforms):
         return T.Compose(
             [
                 T.ToPILImage(),
-                T.Resize(256),
+                T.Resize(self.pre_center_crop),
                 T.CenterCrop(self.image_size),
                 T.ToTensor(),
                 T.Normalize(self.mean, self.std),

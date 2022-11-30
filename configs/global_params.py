@@ -95,6 +95,7 @@ class AugmentationParams:
     """Class to keep track of the augmentation parameters."""
 
     image_size: int = 224
+    pre_center_crop: int = 256
     mean: List[float] = field(default_factory=lambda: [0.485, 0.456, 0.406])
     std: List[float] = field(default_factory=lambda: [0.229, 0.224, 0.225])
 
