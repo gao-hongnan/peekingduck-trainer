@@ -266,20 +266,25 @@ def free_gpu_memory(
 
 
 def return_filepath(
-    image_id: str, folder: Path, extension: str
+    image_id: str,
+    folder: Path,
+    extension: str = ".jpg",
 ) -> str:
     """Add a new column image_path to the train and test csv.
-    We can call the images easily in __getitem__ in Dataset.
-    If the image_id has extension already, then there is no need to add the extension.
+
+    Note:
+        We can call the images easily in __getitem__ in Dataset.
+        If the image_id has extension already, then there is no need to add the extension.
+
     Args:
         image_id (str): The unique image id: 1000015157.jpg
-        folder (Path, optional): The train folder. Defaults to FILES().train_images.
-        extension (str, optional): The extension of the image. Defaults to ".jpg".
+        folder (Path): The data folder.
+        extension (str): The extension of the image. Defaults to ".jpg".
+
     Returns:
-        image_path (str): The path to the image: "c:\\users\\reighns\\kaggle_projects\\cassava\\data\\train\\1000015157.jpg"
+        image_path (str): The path to the image.
     """
-    # TODO: Consider using Path instead os for consistency.
-    image_path = os.path.join(folder, f"{image_id}{extension}")
+    image_path = Path.joinpath(folder, f"{image_id}{extension}").as_posix()
     return image_path
 
 

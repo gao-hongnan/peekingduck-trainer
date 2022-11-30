@@ -4,3 +4,10 @@
 - early_stopping
 - LR finder
 - LR Scheduler
+
+# TODOs Discussion with Team
+
+- Replace all `print` with `logging`.
+- How to type hint say `Model` class and its children? Should I use `Generic` somewhere?
+- Currently, `inference.py` is decoupled from `Trainer` class. I saw PyTorch Lightning
+    uses `trainer.test()` to do inference. Should we do the same?
