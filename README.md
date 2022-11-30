@@ -23,6 +23,13 @@ This repository contains a PyTorch training pipeline for computer vision tasks.
 ~/gaohn/peekingduck-trainer (venv) $ pip install -r requirements.txt
 ```
 
+If you are using Conda, then you can do
+
+```bash
+~/gaohn/peekingduck-trainer (venv) $ conda install pytorch torchvision torchaudio \
+                                     pytorch-cuda=11.6 -c pytorch -c nvidia
+```
+
 If your computer does not have GPU, then you can install the CPU version of PyTorch.
 
 ```bash
