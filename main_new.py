@@ -13,6 +13,7 @@ from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
 from torchmetrics.classification import MulticlassCalibrationError
 
 from configs import config, global_params, mnist_params
+from configs.base_params import PipelineConfig
 from src import dataset
 from src.callbacks.early_stopping import EarlyStopping
 from src.callbacks.history import History
@@ -303,9 +304,12 @@ def train_loop(pipeline_config: global_params.PipelineConfig, *args, **kwargs):
     return df_oof
 
 
-def train_steel_defect(debug: bool = True):
-    pipeline_config = global_params.PipelineConfig()
+def train_steel_defect(pipeline_config: PipelineConfig) -> None:
+    """Train Steel Defect."""
     num_classes = pipeline_config.global_train_params.num_classes  # 2
+    dm = ImageClassificationDataModule(pipeline_config)
+    dm.prepare_data()
+
     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
     metrics_collection = MetricCollection(
         [
@@ -325,10 +329,7 @@ def train_steel_defect(debug: bool = True):
         callbacks=[History(), MetricMeter()],
     )
 
-    dm = ImageClassificationDataModule(pipeline_config)
-    dm.prepare_data()
-
-    if debug:
+    if pipeline_config.datamodule.debug:
         dm.setup(stage="debug")
         debug_train_loader = dm.debug_train_dataloader()
         debug_valid_loader = dm.debug_valid_dataloader()
@@ -340,13 +341,9 @@ def train_steel_defect(debug: bool = True):
         _ = trainer.fit(train_loader, valid_loader, fold=None)
 
 
-def train_mnist(debug: bool = False):
-    # TODO: maybe when compiling pipeline config, we can save state of the config as callables,
-    # like torchflare's self.state dict.
-    pipeline_config = mnist_params.PipelineConfig()
-    print(f"Pipeline Config: {pipeline_config}")
+def train_mnist(pipeline_config: PipelineConfig) -> None:
+    """Train MNIST."""
     num_classes = pipeline_config.global_train_params.num_classes  # 10
-
     dm = MNISTDataModule(pipeline_config)
     dm.prepare_data()
 
@@ -380,27 +377,26 @@ def train_mnist(debug: bool = False):
         ],
     )
 
-    if debug:
-        pass
-        # dm.setup(stage="debug")
-        # debug_train_loader = dm.debug_train_dataloader()
-        # debug_valid_loader = dm.debug_valid_dataloader()
-        # _ = trainer.fit(debug_train_loader, debug_valid_loader, fold=None)
-    else:
-        dm.setup(stage="fit")
-        train_loader = dm.train_dataloader()
-        valid_loader = dm.valid_dataloader()
-        history = trainer.fit(train_loader, valid_loader, fold=None)
-        # history = trainer.history
-        print(history.keys())
-        print(history["valid_loss"])
-        print(history["val_Accuracy"])
-        print(history["val_AUROC"])
-        # print(trainer.history["valid_probs"][0].shape)
-        # print(trainer.history["valid_probs"][1].shape)
+    dm.setup(stage="fit")
+    train_loader = dm.train_dataloader()
+    valid_loader = dm.valid_dataloader()
+    history = trainer.fit(train_loader, valid_loader, fold=None)
+    # history = trainer.history
+    print(history.keys())
+    print(history["valid_loss"])
+    print(history["val_Accuracy"])
+    print(history["val_AUROC"])
+    # print(trainer.history["valid_probs"][0].shape)
+    # print(trainer.history["valid_probs"][1].shape)
 
 
 if __name__ == "__main__":
     general_utils.seed_all(1992)
-    # train_steel_defect(debug=True)
-    train_mnist(debug=False)
+    pipeline_config = global_params.PipelineConfig()
+    # train_steel_defect(pipeline_config)
+
+    # TODO: maybe when compiling pipeline config, we can save state of the config as callables,
+    # like torchflare's self.state dict.
+    mnist_config = mnist_params.PipelineConfig()
+    print(f"Pipeline Config: {mnist_config}")
+    train_mnist(mnist_config)

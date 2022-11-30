@@ -28,6 +28,10 @@ class Data:
     blob_file: Optional[str] = "castings.zip"
     data_csv: Union[str, Path] = field(init=False)
     data_dir: Union[str, Path] = field(init=False)
+    image_col_name: str = "image_id"
+    image_path_col_name: str = "image_path"
+    target_col_name: str = ""
+    image_extension: str = ""
     class_name_to_id: Optional[Dict[str, int]] = field(
         default_factory=lambda: {"ok": 0, "defect": 1}
     )
