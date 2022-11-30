@@ -47,7 +47,7 @@ class Data:
 class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
-    debug: bool = True
+    debug: bool = False
 
     test_loader: Optional[Dict[str, Any]] = None
 
@@ -89,6 +89,7 @@ class AugmentationParams:
     """Class to keep track of the augmentation parameters."""
 
     image_size: int = 224
+    pre_center_crop: int = 256
     mean: List[float] = field(default_factory=lambda: [0.485, 0.456, 0.406])
     std: List[float] = field(default_factory=lambda: [0.229, 0.224, 0.225])
 
@@ -199,10 +200,10 @@ class GlobalTrainParams:
 
     debug: bool = False
     debug_multiplier: int = 128
-    epochs: int = 20  # 10 when not debug
+    epochs: int = 3  # 10 when not debug
     use_amp: bool = True
     mixup: bool = False
-    patience: int = 1
+    patience: int = 3
     model_name: str = "custom"
     num_classes: int = 2
     classification_type: str = "multiclass"
