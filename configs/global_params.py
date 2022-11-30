@@ -30,7 +30,7 @@ class Data:
     data_dir: Union[str, Path] = field(init=False)
     image_col_name: str = "image_id"
     image_path_col_name: str = "image_path"
-    target_col_name: str = ""
+    target_col_name: str = "class_id"
     image_extension: str = ""
     class_name_to_id: Optional[Dict[str, int]] = field(
         default_factory=lambda: {"ok": 0, "defect": 1}
