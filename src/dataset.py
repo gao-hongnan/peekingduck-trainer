@@ -331,7 +331,9 @@ class ImageClassificationDataModule(CustomizedDataModule):
             extract_file(root_dir, blob_file)
 
         df_train = pd.read_csv(self.pipeline_config.data.train_csv)
-
+        df_train["image_id_final"] = (
+            df_train["patient_id"].astype(str) + "_" + df_train["image_id"].astype(str)
+        )
         df_train["image_path"] = df_train[
             self.pipeline_config.data.image_col_name
         ].apply(
@@ -341,14 +343,16 @@ class ImageClassificationDataModule(CustomizedDataModule):
                 extension=self.pipeline_config.data.image_extension,
             )
         )
+        print(df_train.head())
 
         # self.df = pd.read_csv(self.pipeline_config.data.data_csv)
         self.train_df, self.valid_df = train_test_split(
             df_train, test_size=0.1, random_state=42
         )
         if self.pipeline_config.datamodule.debug:
-            self.debug_train_df = self.train_df.sample(100)
-            self.debug_valid_df = self.valid_df.sample(100)
+            print("DEBUG MODE ON...")
+            self.train_df = self.train_df.sample(1280)
+            self.valid_df = self.valid_df.sample(128)
 
     def setup(self, stage: str) -> None:
         """Assign train/val datasets for use in dataloaders."""
@@ -367,22 +371,6 @@ class ImageClassificationDataModule(CustomizedDataModule):
                 df=self.valid_df,
                 stage="valid",
                 transforms=valid_transforms,
-            )
-
-        if stage == "debug":
-            debug_transforms = self.transforms.debug_transforms
-            self.debug_train_dataset = ImageClassificationDataset(
-                self.pipeline_config,
-                df=self.debug_train_df,
-                stage="debug",
-                transforms=debug_transforms,
-            )
-
-            self.debug_valid_dataset = ImageClassificationDataset(
-                self.pipeline_config,
-                df=self.debug_valid_df,
-                stage="debug",
-                transforms=debug_transforms,
             )
 
     def train_dataloader(self) -> DataLoader:

@@ -20,11 +20,11 @@ class Data:
     train_csv: Union[str, Path] = field(init=False)
     test_csv: Union[str, Path] = field(init=False)
     data_dir: Union[str, Path] = field(init=False)
-    image_col_name: str = "image_id"
+    image_col_name: str = "image_id_final"
     image_path_col_name: str = "image_path"
     group_col_name: str = "patient_id"
     target_col_name: str = "cancer"
-    image_extension: str = "png"
+    image_extension: str = ".png"
     class_name_to_id: Optional[Dict[str, int]] = field(
         default_factory=lambda: {"benign": 0, "malignant": 1}
     )
@@ -204,7 +204,7 @@ class GlobalTrainParams:
     mixup: bool = False
     patience: int = 1
     model_name: str = "custom"
-    num_classes: int = 10
+    num_classes: int = 2
     classification_type: str = "multiclass"
     monitored_metric: Dict[str, Any] = field(
         default_factory=lambda: {

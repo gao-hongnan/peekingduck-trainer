@@ -266,9 +266,7 @@ def free_gpu_memory(
 
 
 def return_filepath(
-    image_id: str,
-    folder: Path,
-    extension: str,
+    image_id: str, folder: Path, extension: str
 ) -> str:
     """Add a new column image_path to the train and test csv.
     We can call the images easily in __getitem__ in Dataset.
