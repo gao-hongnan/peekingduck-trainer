@@ -32,6 +32,7 @@ from src.utils.general_utils import (
     return_list_of_files,
     seed_all,
     show,
+    return_filepath,
 )
 
 TransformTypes = Optional[Union[A.Compose, T.Compose]]
@@ -319,19 +320,21 @@ class ImageClassificationDataModule(CustomizedDataModule):
             download_to(url, blob_file, root_dir)
             extract_file(root_dir, blob_file)
 
-        all_images = return_list_of_files(
-            data_dir, extensions=[".jpg", ".png", ".jpeg"], return_string=False
-        )
+        df_train = pd.read_csv(self.pipeline_config.data.train_csv)
 
-        df = create_dataframe_with_image_info(
-            all_images,
-            self.pipeline_config.data.class_name_to_id,
-            save_path=self.pipeline_config.data.data_csv,
+        df_train["image_path"] = df_train[
+            self.pipeline_config.data.image_col_name
+        ].apply(
+            lambda x: return_filepath(
+                image_id=x,
+                folder=data_dir,
+                extension=self.pipeline_config.data.image_extension,
+            )
         )
 
         # self.df = pd.read_csv(self.pipeline_config.data.data_csv)
         self.train_df, self.valid_df = train_test_split(
-            df, test_size=0.1, random_state=42
+            df_train, test_size=0.1, random_state=42
         )
         if self.pipeline_config.datamodule.debug:
             self.debug_train_df = self.train_df.sample(100)

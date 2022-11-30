@@ -12,7 +12,7 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
 from torchmetrics.classification import MulticlassCalibrationError
 
-from configs import config, global_params, mnist_params
+from configs import config, global_params, mnist_params, rsna_breast_params
 from src import dataset
 from src.callbacks.early_stopping import EarlyStopping
 from src.callbacks.history import History
@@ -400,7 +400,65 @@ def train_mnist(debug: bool = False):
         # print(trainer.history["valid_probs"][1].shape)
 
 
+def train_rsna_breast(debug: bool = False):
+    pipeline_config = rsna_breast_params.PipelineConfig()
+    print(f"Pipeline Config: {pipeline_config}")
+    num_classes = pipeline_config.global_train_params.num_classes
+
+    dm = ImageClassificationDataModule(pipeline_config)
+    dm.prepare_data()
+
+    model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+    metrics_collection = MetricCollection(
+        [
+            Accuracy(num_classes=num_classes),
+            Precision(num_classes=num_classes),
+            Recall(num_classes=num_classes),
+            AUROC(num_classes=num_classes, average="macro"),
+            MulticlassCalibrationError(
+                num_classes=num_classes
+            ),  # similar to brier loss
+        ]
+    )
+    trainer = Trainer(
+        pipeline_config=pipeline_config,
+        model=model,
+        metrics=metrics_collection,
+        callbacks=[
+            History(),
+            MetricMeter(),
+            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=2),
+            # WandbLogger(
+            #     project="MNIST",
+            #     entity="reighns",
+            #     name="MNIST_EXP_1",
+            #     config=pipeline_config.all_params,
+            # ),
+        ],
+    )
+
+    if debug:
+        pass
+        # dm.setup(stage="debug")
+        # debug_train_loader = dm.debug_train_dataloader()
+        # debug_valid_loader = dm.debug_valid_dataloader()
+        # _ = trainer.fit(debug_train_loader, debug_valid_loader, fold=None)
+    else:
+        dm.setup(stage="fit")
+        train_loader = dm.train_dataloader()
+        valid_loader = dm.valid_dataloader()
+        history = trainer.fit(train_loader, valid_loader, fold=None)
+        # history = trainer.history
+        print(history.keys())
+        print(history["valid_loss"])
+        print(history["val_Accuracy"])
+        print(history["val_AUROC"])
+        # print(trainer.history["valid_probs"][0].shape)
+        # print(trainer.history["valid_probs"][1].shape)
+
+
 if __name__ == "__main__":
     general_utils.seed_all(1992)
-    # train_steel_defect(debug=True)
-    train_mnist(debug=False)
+
+    train_rsna_breast(debug=False)

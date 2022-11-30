@@ -14,14 +14,33 @@ from src.utils.general_utils import generate_uuid4
 class Data:
     """Class for data related params."""
 
-    root_dir: Path = Path(config.DATA_DIR)  # data/
-    urls: Optional[Union[str, List[str]]] = None
-    blob_file: Optional[str] = None
-    pretrained_weights: Optional[str] = None
-    data_csv: Optional[Union[str, Path]] = None
-    class_name_to_id: Optional[Dict[str, int]] = None
-    class_id_to_name: Optional[Dict[int, str]] = None
-    download: bool = True
+    root_dir: Optional[Path] = config.DATA_DIR  # data/
+    url: Optional[str] = ""
+    blob_file: Optional[str] = ""
+    train_csv: Union[str, Path] = field(init=False)
+    test_csv: Union[str, Path] = field(init=False)
+    data_dir: Union[str, Path] = field(init=False)
+    image_col_name: str = "image_id"
+    image_path_col_name: str = "image_path"
+    group_col_name: str = "patient_id"
+    target_col_name: str = "cancer"
+    image_extension: str = "png"
+    class_name_to_id: Optional[Dict[str, int]] = field(
+        default_factory=lambda: {"benign": 0, "malignant": 1}
+    )
+    class_id_to_name: Optional[Dict[int, str]] = field(init=False)
+
+    def __post_init__(self) -> None:
+        """Post init method for dataclass."""
+        self.data_dir = Path(config.DATA_DIR) / "rsna_breast_cancer_detection"
+        self.train_csv = self.data_dir / "train.csv"
+        self.test_csv = self.data_dir / "test.csv"
+        self.class_id_to_name = {v: k for k, v in self.class_name_to_id.items()}
+
+    @property
+    def download(self) -> bool:
+        """Return True if data is not downloaded."""
+        return not Path(self.data_dir).exists()
 
 
 @dataclass(frozen=False, init=True)
@@ -69,17 +88,9 @@ class DataModuleParams:
 class AugmentationParams:
     """Class to keep track of the augmentation parameters."""
 
-    image_size: int = 28
-    mean: List[float] = field(
-        default_factory=lambda: [
-            0.1307,
-        ]
-    )
-    std: List[float] = field(
-        default_factory=lambda: [
-            0.3081,
-        ]
-    )
+    image_size: int = 224
+    mean: List[float] = field(default_factory=lambda: [0.485, 0.456, 0.406])
+    std: List[float] = field(default_factory=lambda: [0.229, 0.224, 0.225])
 
     mixup: bool = False
     mixup_params: Optional[Dict[str, Any]] = None
@@ -89,18 +100,18 @@ class AugmentationParams:
 class ModelParams:
     """Class to keep track of the model parameters."""
 
-    model_name: str = "custom"
+    model_name: str = "resnet50"
     # adaptor: str = "torchvision/timm"
-    # pretrained: bool = True
-    num_classes: int = 10  # 2
-    dropout: float = 0.3  # 0.5
+    pretrained: bool = True
+    num_classes: int = 2
+    # dropout: float = 0.3  # 0.5
 
 
 @dataclass(frozen=False, init=True)
 class Stores:
     """A class to keep track of model artifacts."""
 
-    project_name: str = "MNIST"
+    project_name: str = "RSNA-Breast-Cancer-Detection-2022"
     unique_id: str = field(default_factory=generate_uuid4)
     logs_dir: Path = field(init=False)
     model_artifacts_dir: Path = field(init=False)
