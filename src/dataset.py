@@ -43,6 +43,7 @@ class ImageClassificationDataset(Dataset):
 
     def __init__(
         self,
+        pipeline_config: PipelineConfig,
         df: Optional[pd.DataFrame] = None,
         path: Optional[Union[str, Path]] = None,
         transforms: TransformTypes = None,
@@ -65,13 +66,16 @@ class ImageClassificationDataset(Dataset):
             stage (str): Defaults to "train". One of ['train', 'valid', 'test', 'gradcam']
         """
         # TODO: it is hardcoded and can be put in pipeline_config to be consistent.
-        self.image_path = df["image_path"].values
-        self.image_ids = df["image_id"].values
-        self.targets = df["class_id"].values if stage != "test" else None
+        self.image_path = df[pipeline_config.data.image_path_col_name].values
+        self.image_ids = df[pipeline_config.data.image_col_name].values
+        self.targets = (
+            df[pipeline_config.data.target_col_name].values if stage != "test" else None
+        )
         self.df = df
         self.transforms = transforms
         self.stage = stage
         self.path = path
+        self.pipeline_config = pipeline_config
 
     def __len__(self) -> int:
         """Return the length of the dataset."""
@@ -148,7 +152,11 @@ class ImageClassificationDataset(Dataset):
 
     @classmethod
     def from_df(
-        cls, df: pd.DataFrame, transforms: TransformTypes, stage: str
+        cls,
+        pipeline_config: PipelineConfig,
+        df: pd.DataFrame,
+        transforms: TransformTypes,
+        stage: str,
     ) -> ImageClassificationDataset:
         """Creates an instance of the dataset class from a dataframe.
         This is the default way for now.
@@ -158,11 +166,12 @@ class ImageClassificationDataset(Dataset):
             >>> df = create_dataframe_with_image_info()
         """
 
-        return cls(df=df, transforms=transforms, stage=stage)
+        return cls(pipeline_config, df=df, transforms=transforms, stage=stage)
 
     @classmethod
     def from_folder(
         cls,
+        pipeline_config: PipelineConfig,
         path: Union[str, Path],
         transforms: TransformTypes,
         stage: str,
@@ -187,7 +196,9 @@ class ImageClassificationDataset(Dataset):
                     - image3
             Same for valid and test.
         """
-        return cls(path=path, transforms=transforms, stage=stage, **kwargs)
+        return cls(
+            pipeline_config, path=path, transforms=transforms, stage=stage, **kwargs
+        )
 
 
 class CustomizedDataModule(ABC):
@@ -342,18 +353,19 @@ class ImageClassificationDataModule(CustomizedDataModule):
 
     def setup(self, stage: str) -> None:
         """Assign train/val datasets for use in dataloaders."""
-
         if stage == "fit":
             train_transforms = self.transforms.train_transforms
             valid_transforms = self.transforms.valid_transforms
 
             self.train_dataset = ImageClassificationDataset(
-                self.train_df,
+                self.pipeline_config,
+                df=self.train_df,
                 stage="train",
                 transforms=train_transforms,
             )
             self.valid_dataset = ImageClassificationDataset(
-                self.valid_df,
+                self.pipeline_config,
+                df=self.valid_df,
                 stage="valid",
                 transforms=valid_transforms,
             )
@@ -361,13 +373,17 @@ class ImageClassificationDataModule(CustomizedDataModule):
         if stage == "debug":
             debug_transforms = self.transforms.debug_transforms
             self.debug_train_dataset = ImageClassificationDataset(
-                self.debug_train_df,
+                self.pipeline_config,
+                df=self.debug_train_df,
                 stage="debug",
                 transforms=debug_transforms,
             )
 
             self.debug_valid_dataset = ImageClassificationDataset(
-                self.debug_valid_df, stage="debug", transforms=debug_transforms
+                self.pipeline_config,
+                df=self.debug_valid_df,
+                stage="debug",
+                transforms=debug_transforms,
             )
 
     def train_dataloader(self) -> DataLoader:
