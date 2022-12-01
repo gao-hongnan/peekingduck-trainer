@@ -12,7 +12,7 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
 from torchmetrics.classification import MulticlassCalibrationError
 
-from configs import config, global_params, mnist_params
+from configs import config, global_params, mnist_params, cifar_params
 from configs.base_params import PipelineConfig
 from src import dataset
 from src.callbacks.early_stopping import EarlyStopping
@@ -275,9 +275,9 @@ def train_loop(pipeline_config: global_params.PipelineConfig, *args, **kwargs):
     return df_oof
 
 
-def train_steel_defect(pipeline_config: PipelineConfig) -> None:
+def train_generic(pipeline_config: PipelineConfig) -> None:
     """Train Steel Defect."""
-    num_classes = pipeline_config.global_train_params.num_classes  # 2
+    num_classes = pipeline_config.global_train_params.num_classes
     dm = ImageClassificationDataModule(pipeline_config)
     dm.prepare_data()
 
@@ -297,7 +297,12 @@ def train_steel_defect(pipeline_config: PipelineConfig) -> None:
         pipeline_config=pipeline_config,
         model=model,
         metrics=metrics_collection,
-        callbacks=[History(), MetricMeter()],
+        callbacks=[
+            History(),
+            MetricMeter(),
+            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=2),
+        ],
     )
 
     if pipeline_config.datamodule.debug:
@@ -363,11 +368,14 @@ def train_mnist(pipeline_config: PipelineConfig) -> None:
 
 if __name__ == "__main__":
     general_utils.seed_all(1992)
-    pipeline_config = global_params.PipelineConfig()
-    # train_steel_defect(pipeline_config)
+    # pipeline_config = global_params.PipelineConfig()
+    # train_generic(pipeline_config)
+
+    cifar10_config = cifar_params.PipelineConfig()
+    train_generic(cifar10_config)
 
     # TODO: maybe when compiling pipeline config, we can save state of the config as callables,
     # like torchflare's self.state dict.
-    mnist_config = mnist_params.PipelineConfig()
-    print(f"Pipeline Config: {mnist_config}")
-    train_mnist(mnist_config)
+    # mnist_config = mnist_params.PipelineConfig()
+    # print(f"Pipeline Config: {mnist_config}")
+    # train_mnist(mnist_config)

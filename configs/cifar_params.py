@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import torch
+import torchvision.transforms as T
 
 from configs import config
 from src.utils.general_utils import generate_uuid4
@@ -79,7 +80,7 @@ class DataModuleParams:
 
     train_loader: Dict[str, Any] = field(
         default_factory=lambda: {
-            "batch_size": 32,
+            "batch_size": 64,
             "num_workers": 0,
             "pin_memory": True,
             "drop_last": False,
@@ -89,7 +90,7 @@ class DataModuleParams:
     )
     valid_loader: Dict[str, Any] = field(
         default_factory=lambda: {
-            "batch_size": 32,
+            "batch_size": 64,
             "num_workers": 0,
             "pin_memory": True,
             "drop_last": False,
@@ -103,13 +104,37 @@ class DataModuleParams:
 class AugmentationParams:
     """Class to keep track of the augmentation parameters."""
 
-    image_size: int = 224
-    pre_center_crop: int = 256
+    image_size: int = 32
     mean: List[float] = field(default_factory=lambda: [0.485, 0.456, 0.406])
     std: List[float] = field(default_factory=lambda: [0.229, 0.224, 0.225])
 
     mixup: bool = False
     mixup_params: Optional[Dict[str, Any]] = None
+
+    train_transforms: Optional[T.Compose] = field(init=False, default=None)
+    valid_transforms: Optional[T.Compose] = field(init=False, default=None)
+    test_transforms: Optional[T.Compose] = field(init=False, default=None)
+    debug_transforms: Optional[T.Compose] = field(init=False, default=None)
+
+    def __post_init__(self) -> None:
+        """Post init method for dataclass."""
+        self.train_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.RandomResizedCrop(self.image_size),
+                T.RandomHorizontalFlip(),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+        self.valid_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.Resize(self.image_size),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
 
 
 @dataclass(frozen=False, init=True)

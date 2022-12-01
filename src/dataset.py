@@ -268,7 +268,6 @@ class MNISTDataModule(CustomizedDataModule):
         # download data here
         self.train_transforms = self.transforms.train_transforms
         self.valid_transforms = self.transforms.valid_transforms
-        print(self.train_transforms)
 
         self.path = self.pipeline_config.data.root_dir
         self.download = self.pipeline_config.data.download
@@ -336,6 +335,7 @@ class ImageClassificationDataModule(CustomizedDataModule):
         all_images = return_list_of_files(
             data_dir, extensions=[".jpg", ".png", ".jpeg"], return_string=False
         )
+        print(all_images)
 
         df = create_dataframe_with_image_info(
             all_images,
