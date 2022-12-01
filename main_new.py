@@ -26,7 +26,7 @@ from src.model import ImageClassificationModel, MNISTModel
 from src.trainer import Trainer
 from src.utils import general_utils
 
-device = config.DEVICE
+
 # logs_dir = global_params.PipelineConfig.stores.logs_dir
 # main_logger = config.init_logger(
 #     log_file=Path.joinpath(logs_dir, "main.log"),
@@ -34,35 +34,6 @@ device = config.DEVICE
 # )  # FIXME: follow trainer style logger
 
 # shutil.copy(FILES.global_params_path, LOGS_PARAMS.LOGS_DIR_RUN_ID)
-
-
-def wandb_init(fold: int, pipeline_config: global_params.PipelineConfig):
-    """Initialize wandb run.
-    Args:
-        fold (int): [description]
-        pipeline_config (global_params.PipelineConfig): The pipeline configuration.
-    Returns:
-        [type]: [description]
-    """
-    config = {
-        "Train_Params": pipeline_config.global_train_params.to_dict(),
-        "Model_Params": pipeline_config.model_params.to_dict(),
-        "Loader_Params": pipeline_config.loader_params.to_dict(),
-        "File_Params": pipeline_config.files.to_dict(),
-        "Wandb_Params": pipeline_config.wandb_params.to_dict(),
-        "Folds_Params": pipeline_config.folds.to_dict(),
-        "Augment_Params": pipeline_config.transforms.to_dict(),
-        "Criterion_Params": pipeline_config.criterion_params.to_dict(),
-        "Scheduler_Params": pipeline_config.scheduler_params.to_dict(),
-        "Optimizer_Params": pipeline_config.optimizer_params.to_dict(),
-    }
-
-    wandb_run = wandb.init(
-        config=config,
-        name=f"{pipeline_config.global_train_params.model_name}_fold_{fold}",
-        **pipeline_config.wandb_params.to_dict(),
-    )
-    return wandb_run
 
 
 def log_gradcam(
