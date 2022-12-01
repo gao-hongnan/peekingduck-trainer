@@ -105,10 +105,11 @@ class ImageClassificationDataset(Dataset):
         self, target: torch.Tensor, dtype: torch.dtype = torch.long
     ) -> torch.Tensor:
         """Apply transforms to the target.
-        This is useful for tasks such as segmentation object detection
-        where targets are in the form of bounding boxes, segmentation masks etc.
+
+        Note:
+            This is useful for tasks such as segmentation object detection where
+            targets are in the form of bounding boxes, segmentation masks etc.
         """
-        # FIXME: recall BCEWithLogitsLoss expects a target.float() and not target.long()
         return torch.tensor(target, dtype=dtype)
 
     def __getitem__(
@@ -163,7 +164,6 @@ class ImageClassificationDataset(Dataset):
             >>> from utils import create_dataframe_with_image_info
             >>> df = create_dataframe_with_image_info()
         """
-
         return cls(pipeline_config, df=df, transforms=transforms, stage=stage)
 
     @classmethod
@@ -202,9 +202,6 @@ class ImageClassificationDataset(Dataset):
 class CustomizedDataModule(ABC):
     """Base class for custom data module.
 
-    Note:
-        1. Consider extending this to segmentation and object detection.
-
     References:
         - https://pytorch-lightning.readthedocs.io/en/latest/data/datamodule.html
         - https://github.com/Lightning-AI/lightning/blob/master/src/pytorch_lightning/core/hooks.py
@@ -228,10 +225,6 @@ class CustomizedDataModule(ABC):
 
             if stage == "test":
                 # assign test dataset for use in dataloaders
-                pass
-
-            if stage == "debug":
-                # assign debug dataset for use in dataloaders
                 pass
         """
         raise NotImplementedError

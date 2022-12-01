@@ -12,3 +12,7 @@
 - How to type hint say `Model` class and its children? Should I use `Generic` somewhere?
 - Currently, `inference.py` is decoupled from `Trainer` class. I saw PyTorch Lightning
     uses `trainer.test()` to do inference. Should we do the same?
+- Recall BCEWithLogitsLoss expects a target.float() and not target.long() so need change
+accordingly in `Dataset` class.
+- `CustomizedDataModule` This can extended to segmentation and object detection.
+- Consider removing `debug_dataloader(s)`.
