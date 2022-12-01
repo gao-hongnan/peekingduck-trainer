@@ -4,6 +4,7 @@
 - early_stopping
 - LR finder
 - LR Scheduler
+- We need to add mixup/cutmix support, these SOTA techniques are common now.
 
 # TODOs Discussion with Team
 

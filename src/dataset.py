@@ -262,10 +262,14 @@ class MNISTDataModule(CustomizedDataModule):
     def __init__(self, pipeline_config: Optional[PipelineConfig] = None) -> None:
         super().__init__(pipeline_config)
         self.pipeline_config = pipeline_config
+        self.transforms = ImageClassificationTransforms(pipeline_config)
 
     def prepare_data(self) -> None:
         # download data here
-        self.transform = T.Compose([T.ToTensor(), T.Normalize((0.1307,), (0.3081,))])
+        self.train_transforms = self.transforms.train_transforms
+        self.valid_transforms = self.transforms.valid_transforms
+        print(self.train_transforms)
+
         self.path = self.pipeline_config.data.root_dir
         self.download = self.pipeline_config.data.download
 
@@ -276,13 +280,13 @@ class MNISTDataModule(CustomizedDataModule):
             self.train_dataset = MNIST(
                 download=self.download,
                 root=self.path,
-                transform=self.transform,
+                transform=self.train_transforms,
                 train=True,
             )
             self.valid_dataset = MNIST(
                 download=self.download,
                 root=self.path,
-                transform=self.transform,
+                transform=self.valid_transforms,
                 train=False,
             )
         if self.pipeline_config.datamodule.debug:

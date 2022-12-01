@@ -6,11 +6,13 @@ import os
 import sys
 
 sys.path.insert(1, os.getcwd())
-from dataclasses import dataclass, field, asdict
+
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import torch
+import torchvision.transforms as T
 
 from configs import config
 from configs.base_params import AbstractPipelineConfig
@@ -101,6 +103,41 @@ class AugmentationParams:
 
     mixup: bool = False
     mixup_params: Optional[Dict[str, Any]] = None
+
+    train_transforms: Optional[T.Compose] = field(init=False, default=None)
+    valid_transforms: Optional[T.Compose] = field(init=False, default=None)
+    test_transforms: Optional[T.Compose] = field(init=False, default=None)
+    debug_transforms: Optional[T.Compose] = field(init=False, default=None)
+
+    def __post_init__(self) -> None:
+        """Post init method for dataclass."""
+        self.train_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.RandomResizedCrop(self.image_size),
+                T.RandomHorizontalFlip(),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+        self.valid_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.Resize(self.pre_center_crop),
+                T.CenterCrop(self.image_size),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+
+        self.debug_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.Resize(self.image_size),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
 
 
 @dataclass(frozen=False, init=True)

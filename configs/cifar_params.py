@@ -13,14 +13,49 @@ from src.utils.general_utils import generate_uuid4
 class Data:
     """Class for data related params."""
 
-    root_dir: Path = Path(config.DATA_DIR)  # data/
-    urls: Optional[Union[str, List[str]]] = None
-    blob_file: Optional[str] = None
-    pretrained_weights: Optional[str] = None
-    data_csv: Optional[Union[str, Path]] = None
-    class_name_to_id: Optional[Dict[str, int]] = None
-    class_id_to_name: Optional[Dict[int, str]] = None
-    download: bool = True
+    root_dir: Optional[Path] = config.DATA_DIR  # data/
+    url: Optional[
+        str
+    ] = "https://github.com/gao-hongnan/peekingduck-trainer/releases/download/v0.0.1-alpha/cifar10.zip"
+    blob_file: Optional[str] = "cifar10.zip"
+    train_csv: Union[str, Path] = field(init=False)
+    test_csv: Union[str, Path] = field(init=False)
+    train_dir: Union[str, Path] = field(init=False)
+    test_dir: Union[str, Path] = field(init=False)
+    data_dir: Union[str, Path] = field(init=False)
+    image_col_name: str = "image_id"
+    image_path_col_name: str = "image_path"
+    target_col_name: str = "class_id"
+    image_extension: str = ".png"
+    class_name_to_id: Optional[Dict[str, int]] = field(
+        default_factory=lambda: {
+            "airplane": 0,
+            "automobile": 1,
+            "bird": 2,
+            "cat": 3,
+            "deer": 4,
+            "dog": 5,
+            "frog": 6,
+            "horse": 7,
+            "ship": 8,
+            "truck": 9,
+        }
+    )
+    class_id_to_name: Optional[Dict[int, str]] = field(init=False)
+
+    def __post_init__(self) -> None:
+        """Post init method for dataclass."""
+        self.data_dir = Path(config.DATA_DIR) / "cifar10"
+        self.train_dir = self.data_dir / "train"
+        self.test_dir = self.data_dir / "test"
+        self.train_csv = self.train_dir / "train.csv"
+        self.test_csv = self.test_dir / "test.csv"
+        self.class_id_to_name = {v: k for k, v in self.class_name_to_id.items()}
+
+    @property
+    def download(self) -> bool:
+        """Return True if data is not downloaded."""
+        return not Path(self.data_dir).exists()
 
 
 @dataclass(frozen=False, init=True)
@@ -68,17 +103,10 @@ class DataModuleParams:
 class AugmentationParams:
     """Class to keep track of the augmentation parameters."""
 
-    image_size: int = 28
-    mean: List[float] = field(
-        default_factory=lambda: [
-            0.1307,
-        ]
-    )
-    std: List[float] = field(
-        default_factory=lambda: [
-            0.3081,
-        ]
-    )
+    image_size: int = 224
+    pre_center_crop: int = 256
+    mean: List[float] = field(default_factory=lambda: [0.485, 0.456, 0.406])
+    std: List[float] = field(default_factory=lambda: [0.229, 0.224, 0.225])
 
     mixup: bool = False
     mixup_params: Optional[Dict[str, Any]] = None
