@@ -1,5 +1,6 @@
 from __future__ import generators, print_function
 
+import importlib
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -11,8 +12,8 @@ from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
 from torchmetrics.classification import MulticlassCalibrationError
-
-from configs import config, global_params, mnist_params, cifar_params
+import argparse
+from configs import config, global_params, mnist_params
 from configs.base_params import PipelineConfig
 from src import dataset
 from src.callbacks.early_stopping import EarlyStopping
@@ -25,7 +26,6 @@ from src.metrics import metric
 from src.model import ImageClassificationModel, MNISTModel
 from src.trainer import Trainer
 from src.utils import general_utils
-
 
 # logs_dir = global_params.PipelineConfig.stores.logs_dir
 # main_logger = config.init_logger(
@@ -301,20 +301,17 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
             History(),
             MetricMeter(),
             ModelCheckpoint(mode="max", monitor="val_Accuracy"),
-            EarlyStopping(mode="max", monitor="val_Accuracy", patience=2),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
         ],
     )
 
-    if pipeline_config.datamodule.debug:
-        dm.setup(stage="debug")
-        debug_train_loader = dm.debug_train_dataloader()
-        debug_valid_loader = dm.debug_valid_dataloader()
-        _ = trainer.fit(debug_train_loader, debug_valid_loader, fold=None)
-    else:
-        dm.setup(stage="fit")
-        train_loader = dm.train_dataloader()
-        valid_loader = dm.valid_dataloader()
-        _ = trainer.fit(train_loader, valid_loader, fold=None)
+    dm.setup(stage="fit")
+    train_loader = dm.train_dataloader()
+    valid_loader = dm.valid_dataloader()
+    history = trainer.fit(train_loader, valid_loader, fold=None)
+    print("Valid Loss", history["valid_loss"])
+    print("Valid Acc", history["val_Accuracy"])
+    print("Valid AUROC", history["val_AUROC"])
 
 
 def train_mnist(pipeline_config: PipelineConfig) -> None:
@@ -366,16 +363,40 @@ def train_mnist(pipeline_config: PipelineConfig) -> None:
     # print(trainer.history["valid_probs"][1].shape)
 
 
+def parse_opt():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config-name",
+        type=str,
+        default="cifar_params",
+        help="The name of the config file.",
+    )
+    return parser.parse_args()
+
+
+# TODO: maybe when compiling pipeline config, we can save state of the config as callables,
+# like torchflare's self.state dict.
+def run(opt):
+    base_config_path = "configs."
+    config_name = opt.config_name
+    print(f"Running config: {config_name}")
+    config_path = base_config_path + config_name
+    project = importlib.import_module(config_path)
+    print(project)
+
+    pipeline_config = project.PipelineConfig()
+    print(f"Pipeline config: {pipeline_config.all_params}")
+    if config_name == "mnist_params":
+        train_mnist(pipeline_config)
+    else:
+        train_generic(pipeline_config)
+
+
 if __name__ == "__main__":
     general_utils.seed_all(1992)
-    # pipeline_config = global_params.PipelineConfig()
-    # train_generic(pipeline_config)
+    opt = parse_opt()
+    run(opt)
 
-    cifar10_config = cifar_params.PipelineConfig()
-    train_generic(cifar10_config)
-
-    # TODO: maybe when compiling pipeline config, we can save state of the config as callables,
-    # like torchflare's self.state dict.
     # mnist_config = mnist_params.PipelineConfig()
     # print(f"Pipeline Config: {mnist_config}")
     # train_mnist(mnist_config)

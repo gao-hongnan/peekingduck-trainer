@@ -151,10 +151,6 @@ def convert_path_to_str(path: Union[Path, str]) -> str:
         path (Union[Path, str]): Path to convert.
     Returns:
         str: Converted path.
-    Examples:
-        >>> ot_raw_data_path = config.OTPaths().raw_data_folder
-        >>> list_pathlib_files = list(ot_raw_data_path.glob("**/*.xlsx"))
-        >>> map_list_to_string = list(map(convert_path_to_string, list_pathlib_files))
     """
     if isinstance(path, (Path, PurePath)):
         return Path(path).as_posix()
@@ -208,27 +204,28 @@ def return_list_of_files(
 
 
 def create_dataframe_with_image_info(
-    image_directory: List[Path],
+    image_dir: List[Path],
     class_name_to_id: Dict[str, int],
     save_path: Optional[str] = None,
 ) -> pd.DataFrame:
+    """Creates a dataframe with image information."""
     data_list = []
-    # image_path is the full abs path
-    for image_path in image_directory:
 
-        # image_id is the filename without extension
-        image_id = image_path.stem
+    for image_path in tqdm(image_dir):  # image_path is the full abs path
+        image_id = image_path.stem  # image_id is the filename without extension
 
         # get the label
-        # FIXME: this is a hacky way to get the label and sometimes if
-        # folders organized by class name then this will fail so need to use
-        # image_path.parents[0].name
-        # class_name = image_path.parents[0].name
-        if image_id.startswith("cast_ok"):
-            class_name = "ok"
-        else:
-            class_name = "defect"
-
+        # assumes that the image_dir is structured as follows:
+        # train_dir
+        #   - class1
+        #       - image1.jpg
+        #       - image2.jpg
+        #   - class2
+        #       - image3.jpg
+        #       - image4.jpg
+        #   - class3
+        #       - ...
+        class_name = image_path.parents[0].name
         class_id = int(class_name_to_id[class_name])
 
         image_path = image_path.as_posix()
@@ -290,7 +287,6 @@ def return_filepath(
 
 def get_mean_rgb_values(image: np.ndarray) -> Tuple[float, float, float]:
     """Get the mean RGB values of a single image of (C, H, W)."""
-
     if image.shape[0] != 3:  # if channel is not first, make it so, assume channels last
         image = image.transpose(0, 3, 1, 2)  # if tensor use permute instead
         # permutation applies the following mapping

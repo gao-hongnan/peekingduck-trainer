@@ -319,30 +319,41 @@ class ImageClassificationDataModule(CustomizedDataModule):
         url = self.pipeline_config.data.url
         blob_file = self.pipeline_config.data.blob_file
         root_dir = self.pipeline_config.data.root_dir
-        data_dir = self.pipeline_config.data.data_dir
+        train_dir = self.pipeline_config.data.train_dir
+        test_dir = self.pipeline_config.data.test_dir
 
         if self.pipeline_config.data.download:
             download_to(url, blob_file, root_dir)
             extract_file(root_dir, blob_file)
 
-        all_images = return_list_of_files(
-            data_dir, extensions=[".jpg", ".png", ".jpeg"], return_string=False
+        train_images = return_list_of_files(
+            train_dir, extensions=[".jpg", ".png", ".jpeg"], return_string=False
         )
-        print(all_images)
+        test_images = return_list_of_files(
+            test_dir, extensions=[".jpg", ".png", ".jpeg"], return_string=False
+        )
+        print(f"Total number of images: {len(train_images)}")
+        print(f"Total number of test images: {len(test_images)}")
 
-        df = create_dataframe_with_image_info(
-            all_images,
-            self.pipeline_config.data.class_name_to_id,
-            save_path=self.pipeline_config.data.data_csv,
-        )
+        if Path(self.pipeline_config.data.train_csv).exists():
+            df = pd.read_csv(self.pipeline_config.data.train_csv)
+        else:
+            df = create_dataframe_with_image_info(
+                train_images,
+                self.pipeline_config.data.class_name_to_id,
+                save_path=self.pipeline_config.data.train_csv,
+            )
+        print(df.head())
 
         # self.df = pd.read_csv(self.pipeline_config.data.data_csv)
         self.train_df, self.valid_df = train_test_split(
-            df, test_size=0.1, random_state=42
+            df, test_size=0.1, random_state=42, stratify=df["class_id"]
         )
         if self.pipeline_config.datamodule.debug:
-            self.debug_train_df = self.train_df.sample(100)
-            self.debug_valid_df = self.valid_df.sample(100)
+            num_debug_samples = self.pipeline_config.datamodule.num_debug_samples
+            print(f"Debug mode is on, using {num_debug_samples} images for training.")
+            self.train_df = self.train_df.sample(num_debug_samples)
+            self.valid_df = self.valid_df.sample(num_debug_samples)
 
     def setup(self, stage: str) -> None:
         """Assign train/val datasets for use in dataloaders."""
@@ -363,21 +374,8 @@ class ImageClassificationDataModule(CustomizedDataModule):
                 transforms=valid_transforms,
             )
 
-        if stage == "debug":
-            debug_transforms = self.transforms.debug_transforms
-            self.debug_train_dataset = ImageClassificationDataset(
-                self.pipeline_config,
-                df=self.debug_train_df,
-                stage="debug",
-                transforms=debug_transforms,
-            )
-
-            self.debug_valid_dataset = ImageClassificationDataset(
-                self.pipeline_config,
-                df=self.debug_valid_df,
-                stage="debug",
-                transforms=debug_transforms,
-            )
+        if stage == "test":
+            raise NotImplementedError
 
     def train_dataloader(self) -> DataLoader:
         """Train dataloader."""
@@ -391,16 +389,6 @@ class ImageClassificationDataModule(CustomizedDataModule):
             self.valid_dataset, **self.pipeline_config.datamodule.valid_loader
         )
 
-    def debug_train_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.debug_train_dataset, **self.pipeline_config.datamodule.debug_loader
-        )
-
-    def debug_valid_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.debug_valid_dataset, **self.pipeline_config.datamodule.debug_loader
-        )
-
 
 if __name__ == "__main__":
     seed_all(42)
@@ -410,12 +398,12 @@ if __name__ == "__main__":
     pipeline_config = SteelPipelineConfig()
     dm = ImageClassificationDataModule(pipeline_config)
     dm.prepare_data()
-    dm.setup(stage="debug")
+    dm.setup(stage="fit")
 
-    image, target = dm.debug_train_dataset[0]
+    image, target = dm.train_dataset[0]
     print(image.shape, target)
 
-    debug_train_loader = dm.debug_train_dataloader()
+    debug_train_loader = dm.train_dataloader()
     image_batch, target_batch = next(iter(debug_train_loader))
     image_grid = torchvision.utils.make_grid(image_batch)
     show(image_grid)

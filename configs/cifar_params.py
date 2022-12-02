@@ -2,11 +2,12 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-
+import sys
 import torch
 import torchvision.transforms as T
 
 from configs import config
+from configs.base_params import AbstractPipelineConfig
 from src.utils.general_utils import generate_uuid4
 
 
@@ -64,23 +65,13 @@ class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
     debug: bool = True
+    num_debug_samples: int = 128
 
     test_loader: Optional[Dict[str, Any]] = None
 
-    debug_loader: Dict[str, Any] = field(
-        default_factory=lambda: {
-            "batch_size": 4,
-            "num_workers": 0,
-            "pin_memory": True,
-            "drop_last": False,
-            "shuffle": False,
-            "collate_fn": None,
-        }
-    )
-
     train_loader: Dict[str, Any] = field(
         default_factory=lambda: {
-            "batch_size": 64,
+            "batch_size": 32,
             "num_workers": 0,
             "pin_memory": True,
             "drop_last": False,
@@ -90,7 +81,7 @@ class DataModuleParams:
     )
     valid_loader: Dict[str, Any] = field(
         default_factory=lambda: {
-            "batch_size": 64,
+            "batch_size": 32,
             "num_workers": 0,
             "pin_memory": True,
             "drop_last": False,
@@ -98,6 +89,11 @@ class DataModuleParams:
             "collate_fn": None,
         }
     )
+
+    def __post_init__(self) -> None:
+        """Post init method for dataclass."""
+        if self.debug:
+            pass
 
 
 @dataclass(frozen=False, init=True)
@@ -142,9 +138,9 @@ class ModelParams:
     """Class to keep track of the model parameters."""
 
     # TODO: well know backbone models are usually from torchvision or timm.
-    # model_name: str = "resnet18"
+    model_name: str = "resnet18"
     # adaptor: str = "torchvision/timm"
-    # pretrained: bool = True
+    pretrained: bool = True
     num_classes: int = 10  # 2
     dropout: float = 0.3  # 0.5
 
@@ -153,20 +149,20 @@ class ModelParams:
 class Stores:
     """A class to keep track of model artifacts."""
 
-    project_name: str = "MNIST"
+    project_name: str = "CIFAR-10"
     unique_id: str = field(default_factory=generate_uuid4)
     logs_dir: Path = field(init=False)
-    artifacts_dir: Path = field(init=False)
+    model_artifacts_dir: Path = field(init=False)
 
     def __post_init__(self) -> None:
         """Create the logs directory."""
         self.logs_dir = Path(config.LOGS_DIR) / self.project_name / self.unique_id
         self.logs_dir.mkdir(parents=True, exist_ok=True)
 
-        self.artifacts_dir = (
+        self.model_artifacts_dir = (
             Path(config.MODEL_ARTIFACTS) / self.project_name / self.unique_id
         )
-        self.artifacts_dir.mkdir(parents=True, exist_ok=True)
+        self.model_artifacts_dir.mkdir(parents=True, exist_ok=True)
 
 
 @dataclass(frozen=False, init=True)
@@ -205,7 +201,7 @@ class OptimizerParams:
     optimizer_name: str = "AdamW"
     optimizer_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "lr": 1e-4,
+            "lr": 3e-4,
             "betas": (0.9, 0.999),
             "amsgrad": False,
             "weight_decay": 1e-6,
@@ -240,14 +236,21 @@ class GlobalTrainParams:
     """
 
     debug: bool = False
-    debug_multiplier: int = 128
-    epochs: int = 3  # 10 when not debug
+
+    epochs: int = 10  # 10 when not debug
     use_amp: bool = True
     mixup: bool = False
     patience: int = 3
     model_name: str = "custom"
     num_classes: int = 10
     classification_type: str = "multiclass"
+
+    monitored_metric: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "monitor": "val_Accuracy",
+            "mode": "max",
+        }
+    )
 
 
 @dataclass(frozen=False, init=True)
@@ -258,8 +261,11 @@ class CallbackParams:
 
 
 @dataclass(frozen=False, init=True)
-class PipelineConfig:
-    """Pipeline config."""
+class PipelineConfig(AbstractPipelineConfig):
+    """The pipeline configuration class."""
+
+    device: str = field(init=False)
+    all_params: Dict[str, Any] = field(default_factory=dict)
 
     data: Data = Data()
     datamodule: DataModuleParams = DataModuleParams()
@@ -271,4 +277,11 @@ class PipelineConfig:
     scheduler_params: SchedulerParams = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
 
-    device: str = "cuda" if torch.cuda.is_available() else "cpu"  # see utils.set_device
+    def __post_init__(self) -> None:
+        # see utils.set_device
+        self.os = sys.platform
+        if self.os == "darwin":
+            self.device = "mps" if torch.backends.mps.is_available() else "cpu"
+        else:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.all_params = self.to_dict()

@@ -135,7 +135,6 @@ class ImageClassificationModel(Model):
 
     def load_backbone(self) -> nn.Module:
         """Load the backbone of the model."""
-
         backbone = getattr(torchvision.models, self.pipeline_config.model.model_name)(
             pretrained=self.pipeline_config.model.pretrained
         )

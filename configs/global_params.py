@@ -56,6 +56,7 @@ class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
     debug: bool = True
+    num_debug_samples: int = 100
 
     test_loader: Optional[Dict[str, Any]] = None
 
@@ -243,7 +244,6 @@ class GlobalTrainParams:
     """Global training parameters."""
 
     debug: bool = True
-    debug_multiplier: int = 128
     epochs: int = 6  # 10 when not debug
     use_amp: bool = True
     mixup: bool = AugmentationParams().mixup
