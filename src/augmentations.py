@@ -13,7 +13,6 @@ class Transforms(ABC):
     """
 
     def __init__(self, pipeline_config: PipelineConfig) -> None:
-        super().__init__()
         self.pipeline_config = pipeline_config
 
     @property
