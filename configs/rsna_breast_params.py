@@ -19,6 +19,8 @@ class Data:
     blob_file: Optional[str] = ""
     train_csv: Union[str, Path] = field(init=False)
     test_csv: Union[str, Path] = field(init=False)
+    train_dir: Union[str, Path] = field(init=False)
+    test_dir: Union[str, Path] = field(init=False)
     data_dir: Union[str, Path] = field(init=False)
     image_col_name: str = "image_id_final"
     image_path_col_name: str = "image_path"
@@ -33,7 +35,9 @@ class Data:
     def __post_init__(self) -> None:
         """Post init method for dataclass."""
         self.data_dir = Path(config.DATA_DIR) / "rsna_breast_cancer_detection"
+        self.train_dir = self.data_dir / "train"
         self.train_csv = self.data_dir / "train.csv"
+        self.test_dir = self.data_dir / "test"
         self.test_csv = self.data_dir / "test.csv"
         self.class_id_to_name = {v: k for k, v in self.class_name_to_id.items()}
 
