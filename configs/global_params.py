@@ -289,10 +289,10 @@ class PipelineConfig(AbstractPipelineConfig):
         self.all_params = self.to_dict()
 
 
-if __name__ == "__main__":
-    datamodule = DataModuleParams()
-    print(isinstance(datamodule, DataModuleParams))
+# if __name__ == "__main__":
+#     datamodule = DataModuleParams()
+#     print(isinstance(datamodule, DataModuleParams))
 
-    pipeline_config = PipelineConfig()
-    print(pipeline_config.all_params["data"]["root_dir"])
-    print(asdict(pipeline_config).keys())
+#     pipeline_config = PipelineConfig()
+#     print(pipeline_config.all_params["data"]["root_dir"])
+#     print(asdict(pipeline_config).keys())

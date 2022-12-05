@@ -64,7 +64,7 @@ class Data:
 class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
-    debug: bool = True
+    debug: bool = False
     num_debug_samples: int = 128
 
     test_loader: Optional[Dict[str, Any]] = None

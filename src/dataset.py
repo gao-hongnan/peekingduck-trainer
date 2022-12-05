@@ -282,8 +282,14 @@ class MNISTDataModule(CustomizedDataModule):
                 train=False,
             )
         if self.pipeline_config.datamodule.debug:
-            self.train_dataset = Subset(self.train_dataset, indices=range(1280))
-            self.valid_dataset = Subset(self.valid_dataset, indices=range(1280))
+            self.train_dataset = Subset(
+                self.train_dataset,
+                indices=range(self.pipeline_config.datamodule.num_debug_samples),
+            )
+            self.valid_dataset = Subset(
+                self.valid_dataset,
+                indices=range(self.pipeline_config.datamodule.num_debug_samples),
+            )
 
     def train_dataloader(self) -> DataLoader:
         """Train dataloader."""

@@ -13,7 +13,7 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
 from torchmetrics.classification import MulticlassCalibrationError
 import argparse
-from configs import config, global_params, mnist_params
+
 from configs.base_params import PipelineConfig
 from src import dataset
 from src.callbacks.early_stopping import EarlyStopping
@@ -39,7 +39,7 @@ from src.utils import general_utils
 def log_gradcam(
     curr_fold_best_checkpoint,
     df_oof,
-    pipeline_config: global_params.PipelineConfig,
+    pipeline_config: PipelineConfig,
     plot_gradcam: bool = True,
 ):
     """Log gradcam images into wandb for error analysis.
@@ -174,7 +174,7 @@ def log_gradcam(
 def train_one_fold(
     df_folds: pd.DataFrame,
     fold: int,
-    pipeline_config: global_params.PipelineConfig,
+    pipeline_config: PipelineConfig,
     is_plot: bool = False,
     is_forward_pass: bool = True,
     is_gradcam: bool = True,
@@ -255,7 +255,7 @@ def train_one_fold(
     return df_oof
 
 
-def train_loop(pipeline_config: global_params.PipelineConfig, *args, **kwargs):
+def train_loop(pipeline_config: PipelineConfig, *args, **kwargs):
     """Perform the training loop on all folds. Here The CV score is the average of the validation fold metric.
     While the OOF score is the aggregation of all validation folds."""
 
@@ -380,6 +380,7 @@ def run(opt):
     base_config_path = "configs."
     config_name = opt.config_name
     print(f"Running config: {config_name}")
+
     config_path = base_config_path + config_name
     project = importlib.import_module(config_path)
     print(project)

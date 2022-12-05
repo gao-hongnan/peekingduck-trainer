@@ -30,6 +30,7 @@ class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
     debug: bool = True
+    num_debug_samples: int = 1280
 
     test_loader: Optional[Dict[str, Any]] = None
 
@@ -126,6 +127,7 @@ class Stores:
         """Create the logs directory."""
         self.logs_dir = Path(config.LOGS_DIR) / self.project_name / self.unique_id
         self.logs_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Logs directory: {self.logs_dir}")
 
         self.model_artifacts_dir = (
             Path(config.MODEL_ARTIFACTS) / self.project_name / self.unique_id
@@ -203,8 +205,6 @@ class GlobalTrainParams:
     FIXME: overlapping with other params.
     """
 
-    debug: bool = False
-    debug_multiplier: int = 128
     epochs: int = 20  # 10 when not debug
     use_amp: bool = True
     mixup: bool = False
