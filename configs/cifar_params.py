@@ -61,10 +61,26 @@ class Data:
 
 
 @dataclass(frozen=False, init=True)
+class Resampling:
+    """Class for cross validation."""
+
+    # scikit-learn resampling strategy
+    resample_strategy: str = "train_test_split"  # same name as in scikit-learn
+    resample_params: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "train_size": 0.9,
+            "test_size": 0.1,
+            "random_state": 42,
+            "shuffle": True,
+        }
+    )
+
+
+@dataclass(frozen=False, init=True)
 class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
-    debug: bool = False
+    debug: bool = True # TODO: how to pass debug in argparse to here?
     num_debug_samples: int = 128
 
     test_loader: Optional[Dict[str, Any]] = None
@@ -263,9 +279,11 @@ class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
 
     device: str = field(init=False)
+    seed: int = 1992
     all_params: Dict[str, Any] = field(default_factory=dict)
 
     data: Data = Data()
+    resample: Resampling = Resampling()
     datamodule: DataModuleParams = DataModuleParams()
     augmentation: AugmentationParams = AugmentationParams()
     model: ModelParams = ModelParams()
