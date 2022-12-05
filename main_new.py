@@ -1,5 +1,6 @@
 from __future__ import generators, print_function
 
+import importlib
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -11,8 +12,8 @@ from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
 from torchmetrics.classification import MulticlassCalibrationError
+import argparse
 
-from configs import config, global_params, mnist_params, rsna_breast_params
 from configs.base_params import PipelineConfig
 from src import dataset
 from src.callbacks.early_stopping import EarlyStopping
@@ -26,7 +27,6 @@ from src.model import ImageClassificationModel, MNISTModel
 from src.trainer import Trainer
 from src.utils import general_utils
 
-device = config.DEVICE
 # logs_dir = global_params.PipelineConfig.stores.logs_dir
 # main_logger = config.init_logger(
 #     log_file=Path.joinpath(logs_dir, "main.log"),
@@ -36,39 +36,10 @@ device = config.DEVICE
 # shutil.copy(FILES.global_params_path, LOGS_PARAMS.LOGS_DIR_RUN_ID)
 
 
-def wandb_init(fold: int, pipeline_config: global_params.PipelineConfig):
-    """Initialize wandb run.
-    Args:
-        fold (int): [description]
-        pipeline_config (global_params.PipelineConfig): The pipeline configuration.
-    Returns:
-        [type]: [description]
-    """
-    config = {
-        "Train_Params": pipeline_config.global_train_params.to_dict(),
-        "Model_Params": pipeline_config.model_params.to_dict(),
-        "Loader_Params": pipeline_config.loader_params.to_dict(),
-        "File_Params": pipeline_config.files.to_dict(),
-        "Wandb_Params": pipeline_config.wandb_params.to_dict(),
-        "Folds_Params": pipeline_config.folds.to_dict(),
-        "Augment_Params": pipeline_config.transforms.to_dict(),
-        "Criterion_Params": pipeline_config.criterion_params.to_dict(),
-        "Scheduler_Params": pipeline_config.scheduler_params.to_dict(),
-        "Optimizer_Params": pipeline_config.optimizer_params.to_dict(),
-    }
-
-    wandb_run = wandb.init(
-        config=config,
-        name=f"{pipeline_config.global_train_params.model_name}_fold_{fold}",
-        **pipeline_config.wandb_params.to_dict(),
-    )
-    return wandb_run
-
-
 def log_gradcam(
     curr_fold_best_checkpoint,
     df_oof,
-    pipeline_config: global_params.PipelineConfig,
+    pipeline_config: PipelineConfig,
     plot_gradcam: bool = True,
 ):
     """Log gradcam images into wandb for error analysis.
@@ -203,7 +174,7 @@ def log_gradcam(
 def train_one_fold(
     df_folds: pd.DataFrame,
     fold: int,
-    pipeline_config: global_params.PipelineConfig,
+    pipeline_config: PipelineConfig,
     is_plot: bool = False,
     is_forward_pass: bool = True,
     is_gradcam: bool = True,
@@ -284,7 +255,7 @@ def train_one_fold(
     return df_oof
 
 
-def train_loop(pipeline_config: global_params.PipelineConfig, *args, **kwargs):
+def train_loop(pipeline_config: PipelineConfig, *args, **kwargs):
     """Perform the training loop on all folds. Here The CV score is the average of the validation fold metric.
     While the OOF score is the aggregation of all validation folds."""
 
@@ -304,9 +275,9 @@ def train_loop(pipeline_config: global_params.PipelineConfig, *args, **kwargs):
     return df_oof
 
 
-def train_steel_defect(pipeline_config: PipelineConfig) -> None:
+def train_generic(pipeline_config: PipelineConfig) -> None:
     """Train Steel Defect."""
-    num_classes = pipeline_config.global_train_params.num_classes  # 2
+    num_classes = pipeline_config.global_train_params.num_classes
     dm = ImageClassificationDataModule(pipeline_config)
     dm.prepare_data()
 
@@ -326,19 +297,21 @@ def train_steel_defect(pipeline_config: PipelineConfig) -> None:
         pipeline_config=pipeline_config,
         model=model,
         metrics=metrics_collection,
-        callbacks=[History(), MetricMeter()],
+        callbacks=[
+            History(),
+            MetricMeter(),
+            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
+        ],
     )
 
-    if pipeline_config.datamodule.debug:
-        dm.setup(stage="debug")
-        debug_train_loader = dm.debug_train_dataloader()
-        debug_valid_loader = dm.debug_valid_dataloader()
-        _ = trainer.fit(debug_train_loader, debug_valid_loader, fold=None)
-    else:
-        dm.setup(stage="fit")
-        train_loader = dm.train_dataloader()
-        valid_loader = dm.valid_dataloader()
-        _ = trainer.fit(train_loader, valid_loader, fold=None)
+    dm.setup(stage="fit")
+    train_loader = dm.train_dataloader()
+    valid_loader = dm.valid_dataloader()
+    history = trainer.fit(train_loader, valid_loader, fold=None)
+    print("Valid Loss", history["valid_loss"])
+    print("Valid Acc", history["val_Accuracy"])
+    print("Valid AUROC", history["val_AUROC"])
 
 
 def train_mnist(pipeline_config: PipelineConfig) -> None:
@@ -390,60 +363,37 @@ def train_mnist(pipeline_config: PipelineConfig) -> None:
     # print(trainer.history["valid_probs"][1].shape)
 
 
-def train_rsna_breast(pipeline_config: PipelineConfig) -> None:
-    """RSNA Breast 2022."""
-
-    num_classes = pipeline_config.global_train_params.num_classes
-
-    dm = ImageClassificationDataModule(pipeline_config)
-    dm.prepare_data()
-
-    model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
-    metrics_collection = MetricCollection(
-        [
-            Accuracy(num_classes=num_classes),
-            Precision(num_classes=num_classes),
-            Recall(num_classes=num_classes),
-            AUROC(num_classes=num_classes, average="macro"),
-            MulticlassCalibrationError(
-                num_classes=num_classes
-            ),  # similar to brier loss
-        ]
+def parse_opt():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config-name",
+        type=str,
+        default="cifar_params",
+        help="The name of the config file.",
     )
-    trainer = Trainer(
-        pipeline_config=pipeline_config,
-        model=model,
-        metrics=metrics_collection,
-        callbacks=[
-            History(),
-            MetricMeter(),
-            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
-            EarlyStopping(mode="max", monitor="val_Accuracy", patience=2),
-            # WandbLogger(
-            #     project="MNIST",
-            #     entity="reighns",
-            #     name="MNIST_EXP_1",
-            #     config=pipeline_config.all_params,
-            # ),
-        ],
-    )
+    return parser.parse_args()
 
-    dm.setup(stage="fit")
-    train_loader = dm.train_dataloader()
-    valid_loader = dm.valid_dataloader()
-    history = trainer.fit(train_loader, valid_loader, fold=None)
-    # history = trainer.history
-    print(history.keys())
-    print(history["valid_loss"])
-    print(history["val_Accuracy"])
-    print(history["val_AUROC"])
-    # print(trainer.history["valid_probs"][0].shape)
-    # print(trainer.history["valid_probs"][1].shape)
+
+# TODO: maybe when compiling pipeline config, we can save state of the config as callables,
+# like torchflare's self.state dict.
+def run(opt):
+    base_config_path = "configs."
+    config_name = opt.config_name
+    print(f"Running config: {config_name}")
+
+    config_path = base_config_path + config_name
+    project = importlib.import_module(config_path)
+    print(project)
+
+    pipeline_config = project.PipelineConfig()
+    print(f"Pipeline config: {pipeline_config.all_params}")
+    if config_name == "mnist_params":
+        train_mnist(pipeline_config)
+    else:
+        train_generic(pipeline_config)
 
 
 if __name__ == "__main__":
     general_utils.seed_all(1992)
-    pipeline_config = rsna_breast_params.PipelineConfig()
-    print(f"Pipeline Config: {pipeline_config}")
-
-    train_rsna_breast(pipeline_config)
+    opt = parse_opt()
+    run(opt)
