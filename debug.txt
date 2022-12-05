@@ -3,3 +3,9 @@ C:\Users\gaohn\gao_hongnan\peekingduck-trainer\stores\logs\MNIST\333e3ba3-a6b9-4
 
 MNIST no debug
 C:\Users\gaohn\gao_hongnan\peekingduck-trainer\stores\logs\MNIST\76418e79-0971-4d58-8735-35a3b8a6e70d
+
+CIFAR debug
+C:\Users\gaohn\gao_hongnan\peekingduck-trainer\stores\logs\CIFAR-10\7a09cce5-9c1c-45db-94b4-503bd6ea7db5
+
+CIFAR no debug
+C:\Users\gaohn\gao_hongnan\peekingduck-trainer\stores\logs\CIFAR-10\c4414e62-2afa-48cf-91d2-aec9de4f55c7

@@ -235,8 +235,6 @@ class GlobalTrainParams:
     FIXME: overlapping with other params.
     """
 
-    debug: bool = False
-
     epochs: int = 10  # 10 when not debug
     use_amp: bool = True
     mixup: bool = False
