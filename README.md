@@ -45,5 +45,5 @@ If your computer does not have GPU, then you can install the CPU version of PyTo
 ### Run Training
 
 ```bash
-~/gaohn/peekingduck-trainer (venv) $ python main_new.py
+~/gaohn/peekingduck-trainer (venv) $ python main.py
 ```

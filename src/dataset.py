@@ -353,7 +353,9 @@ class ImageClassificationDataModule(CustomizedDataModule):
         print(df.head())
 
         self.train_df, self.valid_df = train_test_split(
-            df, test_size=0.1, random_state=42, stratify=df["class_id"]
+            df,
+            stratify=df[self.pipeline_config.data.target_col_name],
+            **self.pipeline_config.resample.resample_params,
         )
         if self.pipeline_config.datamodule.debug:
             num_debug_samples = self.pipeline_config.datamodule.num_debug_samples
