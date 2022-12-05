@@ -15,7 +15,6 @@ from torchmetrics.classification import MulticlassCalibrationError
 import argparse
 
 from configs.base_params import PipelineConfig
-from src import dataset
 from src.callbacks.early_stopping import EarlyStopping
 from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter
@@ -26,14 +25,6 @@ from src.metrics import metric
 from src.model import ImageClassificationModel, MNISTModel
 from src.trainer import Trainer
 from src.utils import general_utils
-
-# logs_dir = global_params.PipelineConfig.stores.logs_dir
-# main_logger = config.init_logger(
-#     log_file=Path.joinpath(logs_dir, "main.log"),
-#     module_name="main",
-# )  # FIXME: follow trainer style logger
-
-# shutil.copy(FILES.global_params_path, LOGS_PARAMS.LOGS_DIR_RUN_ID)
 
 
 def log_gradcam(
