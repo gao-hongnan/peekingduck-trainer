@@ -2,8 +2,9 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-
+import sys
 import torch
+import torchvision.transforms as T
 
 from configs import config
 from configs.base_params import AbstractPipelineConfig
@@ -45,6 +46,22 @@ class Data:
     def download(self) -> bool:
         """Return True if data is not downloaded."""
         return not Path(self.data_dir).exists()
+
+
+@dataclass(frozen=False, init=True)
+class Resampling:
+    """Class for cross validation."""
+
+    # scikit-learn resampling strategy
+    resample_strategy: str = "train_test_split"  # same name as in scikit-learn
+    resample_params: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "train_size": 0.9,
+            "test_size": 0.1,
+            "random_state": 42,
+            "shuffle": True,
+        }
+    )
 
 
 @dataclass(frozen=False, init=True)
@@ -108,6 +125,31 @@ class AugmentationParams:
 
     mixup: bool = False
     mixup_params: Optional[Dict[str, Any]] = None
+
+    train_transforms: Optional[T.Compose] = field(init=False, default=None)
+    valid_transforms: Optional[T.Compose] = field(init=False, default=None)
+    test_transforms: Optional[T.Compose] = field(init=False, default=None)
+    debug_transforms: Optional[T.Compose] = field(init=False, default=None)
+
+    def __post_init__(self) -> None:
+        """Post init method for dataclass."""
+        self.train_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.RandomResizedCrop(self.image_size),
+                T.RandomHorizontalFlip(),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+        self.valid_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.Resize(self.image_size),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
 
 
 @dataclass(frozen=False, init=True)
@@ -240,9 +282,11 @@ class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
 
     device: str = field(init=False)
+    seed: int = 1992
     all_params: Dict[str, Any] = field(default_factory=dict)
 
     data: Data = Data()
+    resample: Resampling = Resampling()
     datamodule: DataModuleParams = DataModuleParams()
     augmentation: AugmentationParams = AugmentationParams()
     model: ModelParams = ModelParams()
@@ -254,5 +298,9 @@ class PipelineConfig(AbstractPipelineConfig):
 
     def __post_init__(self) -> None:
         # see utils.set_device
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.os = sys.platform
+        if self.os == "darwin":
+            self.device = "mps" if torch.backends.mps.is_available() else "cpu"
+        else:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.all_params = self.to_dict()

@@ -343,7 +343,12 @@ class ImageClassificationDataModule(CustomizedDataModule):
         print(f"Total number of test images: {len(test_images)}")
 
         if Path(self.pipeline_config.data.train_csv).exists():
-            df = pd.read_csv(self.pipeline_config.data.train_csv)
+            # df = pd.read_csv(self.pipeline_config.data.train_csv)
+            df = create_dataframe_with_image_info(
+                train_images,
+                self.pipeline_config.data.class_name_to_id,
+                save_path=self.pipeline_config.data.train_csv,
+            )
         else:
             df = create_dataframe_with_image_info(
                 train_images,
