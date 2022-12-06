@@ -152,6 +152,7 @@ def train_mnist(pipeline_config: PipelineConfig) -> None:
 
 
 def parse_opt() -> argparse.Namespace:
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--config-name",
@@ -165,6 +166,7 @@ def parse_opt() -> argparse.Namespace:
 # TODO: maybe when compiling pipeline config, we can save state of the config as callables,
 # like torchflare's self.state dict.
 def run(opt: argparse.Namespace) -> None:
+    """Run the pipeline."""
     base_config_path = "configs."
     config_name = opt.config_name
     print(f"Running config: {config_name}")
@@ -189,7 +191,3 @@ if __name__ == "__main__":
     seed_all(1992)
     opt = parse_opt()
     run(opt)
-
-    # mnist_config = mnist_params.PipelineConfig()
-    # print(f"Pipeline Config: {mnist_config}")
-    # train_mnist(mnist_config)
