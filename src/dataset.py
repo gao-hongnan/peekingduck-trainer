@@ -11,7 +11,7 @@ sys.path.insert(1, os.getcwd())
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 import albumentations as A
 import cv2
@@ -19,9 +19,10 @@ import pandas as pd
 import torch
 import torchvision
 import torchvision.transforms as T
-from sklearn.model_selection import train_test_split
+
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision.datasets import MNIST
+from sklearn import model_selection
 
 from configs.base_params import PipelineConfig
 from src.augmentations import ImageClassificationTransforms
@@ -210,7 +211,10 @@ class CustomizedDataModule(ABC):
     def __init__(self, pipeline_config: Optional[PipelineConfig] = None) -> None:
         self.pipeline_config = pipeline_config
 
-    def prepare_data(self) -> None:
+    def cross_validation_split(self, fold_num: Optional[int] = None) -> None:
+        """Split the dataset into train, valid and test."""
+
+    def prepare_data(self, fold_num: Optional[int] = None) -> None:
         """See docstring in PyTorch Lightning."""
         # download data here
 
@@ -313,7 +317,57 @@ class ImageClassificationDataModule(CustomizedDataModule):
         self.pipeline_config = pipeline_config
         self.transforms = ImageClassificationTransforms(pipeline_config)
 
-    def prepare_data(self) -> None:
+    def cross_validation_split(
+        self, df: pd.DataFrame, fold_num: Optional[int] = None
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Split the dataframe into train and validation dataframes."""
+        resample_strategy = self.pipeline_config.resample.resample_strategy
+        resample_params = self.pipeline_config.resample.resample_params
+        group_by = self.pipeline_config.data.group_by
+        stratify_by = self.pipeline_config.data.stratify_by
+        stratify = df[stratify_by].values if stratify_by else None
+        groups = df[group_by].values if group_by else None
+
+        if resample_strategy == "train_test_split":
+            train_df, valid_df = getattr(model_selection, resample_strategy)(
+                df,
+                # FIXME: stratify is hard coded for now
+                stratify=df[self.pipeline_config.data.target_col_name],
+                **resample_params,
+            )
+
+        else:  # KFold, StratifiedKFold, GroupKFold etc.
+            # TODO: notice every CV strat has groups in split even if it is not used
+            # this is good for consistency
+            try:
+                cv = getattr(model_selection, resample_strategy)(**resample_params)
+
+            except AttributeError as attr_err:
+                raise ValueError(
+                    f"{resample_strategy} is not a valid resample strategy."
+                ) from attr_err
+            except TypeError as type_err:
+                raise ValueError(
+                    f"Invalid resample params for {resample_strategy}."
+                ) from type_err
+
+            # FIXME: fatal step for now because if df is large,
+            # then this step will be run EVERY single time, redundant!
+            for fold, (_train_idx, valid_idx) in enumerate(
+                cv.split(df, stratify, groups)
+            ):
+                df.loc[valid_idx, "fold"] = fold + 1
+            df["fold"] = df["fold"].astype(int)
+            print(
+                df.groupby(["fold", self.pipeline_config.data.target_col_name]).size()
+            )
+            train_df = df[df.fold != fold_num].reset_index(drop=True)
+            valid_df = df[df.fold == fold_num].reset_index(drop=True)
+            print("fold", fold_num, "train", train_df.shape, "valid", valid_df.shape)
+
+        return train_df, valid_df
+
+    def prepare_data(self, fold_num: Optional[int] = None) -> None:
         """Download data here and prepare.
         TODO:
             1. Here needs to be more generic for users,
@@ -351,11 +405,7 @@ class ImageClassificationDataModule(CustomizedDataModule):
             )
         print(df.head())
 
-        self.train_df, self.valid_df = train_test_split(
-            df,
-            stratify=df[self.pipeline_config.data.target_col_name],
-            **self.pipeline_config.resample.resample_params,
-        )
+        self.train_df, self.valid_df = self.cross_validation_split(df, fold_num)
         if self.pipeline_config.datamodule.debug:
             num_debug_samples = self.pipeline_config.datamodule.num_debug_samples
             print(f"Debug mode is on, using {num_debug_samples} images for training.")

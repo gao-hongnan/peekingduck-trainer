@@ -5,6 +5,10 @@
 - LR finder
 - LR Scheduler
 - We need to add mixup/cutmix support, these SOTA techniques are common now.
+- https://scikit-learn.org/stable/modules/classes.html#module-sklearn.model_selection
+    - messy implementation, we need to clean it up in cross validation. 
+    - SUPER NOT ELEGANT.
+    - see https://github.com/Lightning-AI/lightning/blob/master/examples/pl_loops/kfold.py
 
 # TODOs Discussion with Team
 

@@ -1,6 +1,7 @@
 from __future__ import generators, print_function
 
 import importlib
+import pprint
 
 from pytorch_grad_cam import GradCAM
 from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
@@ -20,10 +21,53 @@ from src.utils.general_utils import seed_all, free_gpu_memory
 
 
 def train_generic(pipeline_config: PipelineConfig) -> None:
-    """Train Steel Defect."""
+    """Train on Generic Image Dataset with Train-Valid-Test Split."""
     num_classes = pipeline_config.global_train_params.num_classes
+
     dm = ImageClassificationDataModule(pipeline_config)
     dm.prepare_data()
+
+    model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+    metrics_collection = MetricCollection(
+        [
+            Accuracy(num_classes=num_classes),
+            Precision(num_classes=num_classes, average="macro"),
+            Recall(num_classes=num_classes, average="macro"),
+            AUROC(num_classes=num_classes, average="macro"),
+            MulticlassCalibrationError(
+                num_classes=num_classes
+            ),  # similar to brier loss
+        ]
+    )
+    trainer = Trainer(
+        pipeline_config=pipeline_config,
+        model=model,
+        metrics=metrics_collection,
+        callbacks=[
+            History(),
+            MetricMeter(),
+            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
+        ],
+    )
+
+    dm.setup(stage="fit")
+    train_loader = dm.train_dataloader()
+    valid_loader = dm.valid_dataloader()
+    history = trainer.fit(train_loader, valid_loader, fold=None)
+    print("Valid Loss", history["valid_loss"])
+    print("Valid Acc", history["val_Accuracy"])
+    print("Valid AUROC", history["val_AUROC"])
+
+
+def train_one_fold(pipeline_config: PipelineConfig, fold_num: int) -> None:
+    """Train one fold on a Generic Image Dataset with a Resampling Strategy.
+    This is the precursor to training on all folds."""
+    num_classes = pipeline_config.global_train_params.num_classes
+    num_folds = pipeline_config.resample.resample_params["n_splits"]
+
+    dm = ImageClassificationDataModule(pipeline_config)
+    dm.prepare_data(fold_num)
 
     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
     metrics_collection = MetricCollection(
@@ -127,10 +171,12 @@ def run(opt: argparse.Namespace) -> None:
 
     config_path = base_config_path + config_name
     project = importlib.import_module(config_path)
-    print(project)
 
     pipeline_config = project.PipelineConfig()
-    print(f"Pipeline config: {pipeline_config.all_params}")
+    print("Pipeline Config:")
+    pp = pprint.PrettyPrinter(depth=4)
+    pp.pprint(pipeline_config.all_params)
+
     if config_name == "mnist_params":
         train_mnist(pipeline_config)
     else:
