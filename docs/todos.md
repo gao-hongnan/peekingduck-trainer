@@ -21,6 +21,7 @@ accordingly in `Dataset` class.
 - `CustomizedDataModule` This can extended to segmentation and object detection.
 - Consider removing `debug_dataloader(s)`.
 - Literal overloading? Model Class.
+- Segregate raw/processed data if not unclean.
 - Pass in project name as iportlib. config. dynamic loading + argparse, click. dec loader
 
 Line 328, if else flag to indicate whether use data dir or csv.

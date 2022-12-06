@@ -54,11 +54,10 @@ class Resampling:
     """Class for cross validation."""
 
     # scikit-learn resampling strategy
-    resample_strategy: str = "train_test_split"  # same name as in scikit-learn
+    resample_strategy: str = "StratifiedGroupKFold"  # same name as in scikit-learn
     resample_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "train_size": 0.9,
-            "test_size": 0.1,
+            "n_splits": 5,
             "random_state": 42,
             "shuffle": True,
         }
