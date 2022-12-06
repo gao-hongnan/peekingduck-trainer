@@ -25,7 +25,8 @@ class Data:
     data_dir: Union[str, Path] = field(init=False)
     image_col_name: str = "image_id_final"
     image_path_col_name: str = "image_path"
-    group_col_name: str = "patient_id"
+    group_by: str = "patient_id"
+    stratify_by: Optional[str] = None
     target_col_name: str = "cancer"
     image_extension: str = ".png"
     class_name_to_id: Optional[Dict[str, int]] = field(

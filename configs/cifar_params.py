@@ -28,6 +28,8 @@ class Data:
     image_col_name: str = "image_id"
     image_path_col_name: str = "image_path"
     target_col_name: str = "class_id"
+    group_by: Optional[str] = None
+    stratify_by: Optional[str] = None
     image_extension: str = ".png"
     class_name_to_id: Optional[Dict[str, int]] = field(
         default_factory=lambda: {
@@ -80,7 +82,7 @@ class Resampling:
 class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
-    debug: bool = True # TODO: how to pass debug in argparse to here?
+    debug: bool = True  # TODO: how to pass debug in argparse to here?
     num_debug_samples: int = 128
 
     test_loader: Optional[Dict[str, Any]] = None
