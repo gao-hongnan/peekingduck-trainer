@@ -142,6 +142,7 @@ airflow/airflow.db
 # temp
 tmp.py
 tmp.md
+df.csv
 
 castings_data
 logs

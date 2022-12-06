@@ -211,10 +211,12 @@ class CustomizedDataModule(ABC):
     def __init__(self, pipeline_config: Optional[PipelineConfig] = None) -> None:
         self.pipeline_config = pipeline_config
 
-    def cross_validation_split(self, fold_num: Optional[int] = None) -> None:
+    def cross_validation_split(
+        self, df: pd.DataFrame, fold: Optional[int] = None
+    ) -> None:
         """Split the dataset into train, valid and test."""
 
-    def prepare_data(self, fold_num: Optional[int] = None) -> None:
+    def prepare_data(self, fold: Optional[int] = None) -> None:
         """See docstring in PyTorch Lightning."""
         # download data here
 
@@ -318,7 +320,7 @@ class ImageClassificationDataModule(CustomizedDataModule):
         self.transforms = ImageClassificationTransforms(pipeline_config)
 
     def cross_validation_split(
-        self, df: pd.DataFrame, fold_num: Optional[int] = None
+        self, df: pd.DataFrame, fold: Optional[int] = None
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Split the dataframe into train and validation dataframes."""
         resample_strategy = self.pipeline_config.resample.resample_strategy
@@ -353,21 +355,22 @@ class ImageClassificationDataModule(CustomizedDataModule):
 
             # FIXME: fatal step for now because if df is large,
             # then this step will be run EVERY single time, redundant!
-            for fold, (_train_idx, valid_idx) in enumerate(
+            for _fold, (_train_idx, valid_idx) in enumerate(
                 cv.split(df, stratify, groups)
             ):
-                df.loc[valid_idx, "fold"] = fold + 1
+                df.loc[valid_idx, "fold"] = _fold + 1
             df["fold"] = df["fold"].astype(int)
+            df.to_csv("df.csv", index=False)
             print(
                 df.groupby(["fold", self.pipeline_config.data.target_col_name]).size()
             )
-            train_df = df[df.fold != fold_num].reset_index(drop=True)
-            valid_df = df[df.fold == fold_num].reset_index(drop=True)
-            print("fold", fold_num, "train", train_df.shape, "valid", valid_df.shape)
+            train_df = df[df.fold != fold].reset_index(drop=True)
+            valid_df = df[df.fold == fold].reset_index(drop=True)
+            print("fold", fold, "train", train_df.shape, "valid", valid_df.shape)
 
         return train_df, valid_df
 
-    def prepare_data(self, fold_num: Optional[int] = None) -> None:
+    def prepare_data(self, fold: Optional[int] = None) -> None:
         """Download data here and prepare.
         TODO:
             1. Here needs to be more generic for users,
@@ -405,7 +408,7 @@ class ImageClassificationDataModule(CustomizedDataModule):
             )
         print(df.head())
 
-        self.train_df, self.valid_df = self.cross_validation_split(df, fold_num)
+        self.train_df, self.valid_df = self.cross_validation_split(df, fold)
         if self.pipeline_config.datamodule.debug:
             num_debug_samples = self.pipeline_config.datamodule.num_debug_samples
             print(f"Debug mode is on, using {num_debug_samples} images for training.")

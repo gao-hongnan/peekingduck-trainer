@@ -60,14 +60,14 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
     print("Valid AUROC", history["val_AUROC"])
 
 
-def train_one_fold(pipeline_config: PipelineConfig, fold_num: int) -> None:
+def train_one_fold(pipeline_config: PipelineConfig, fold: int) -> None:
     """Train one fold on a Generic Image Dataset with a Resampling Strategy.
     This is the precursor to training on all folds."""
     num_classes = pipeline_config.global_train_params.num_classes
     num_folds = pipeline_config.resample.resample_params["n_splits"]
 
     dm = ImageClassificationDataModule(pipeline_config)
-    dm.prepare_data(fold_num)
+    dm.prepare_data(fold)
 
     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
     metrics_collection = MetricCollection(
@@ -96,7 +96,7 @@ def train_one_fold(pipeline_config: PipelineConfig, fold_num: int) -> None:
     dm.setup(stage="fit")
     train_loader = dm.train_dataloader()
     valid_loader = dm.valid_dataloader()
-    history = trainer.fit(train_loader, valid_loader, fold=None)
+    history = trainer.fit(train_loader, valid_loader, fold=fold)
     print("Valid Loss", history["valid_loss"])
     print("Valid Acc", history["val_Accuracy"])
     print("Valid AUROC", history["val_AUROC"])
@@ -179,6 +179,8 @@ def run(opt: argparse.Namespace) -> None:
 
     if config_name == "mnist_params":
         train_mnist(pipeline_config)
+    elif "_cv_" in config_name:
+        train_one_fold(pipeline_config, fold=1)
     else:
         train_generic(pipeline_config)
 
