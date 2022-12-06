@@ -33,7 +33,6 @@ from src.utils.general_utils import (
     return_list_of_files,
     seed_all,
     show,
-    return_filepath,
 )
 
 TransformTypes = Optional[Union[A.Compose, T.Compose]]
@@ -52,11 +51,9 @@ class ImageClassificationDataset(Dataset):
         **kwargs,
     ) -> None:
         """Constructor for the dataset class.
-
         Note:
             image_path, image_id and class_id are hardcoded as the column names
             of df are assumed to be such.
-
         Args:
             df (pd.DataFrame): Dataframe for either train, valid or test.
                 This holds the image infos such as image path, image id, target etc.
@@ -107,7 +104,6 @@ class ImageClassificationDataset(Dataset):
         self, target: torch.Tensor, dtype: torch.dtype = torch.long
     ) -> torch.Tensor:
         """Apply transforms to the target.
-
         Note:
             This is useful for tasks such as segmentation object detection where
             targets are in the form of bounding boxes, segmentation masks etc.
@@ -118,15 +114,12 @@ class ImageClassificationDataset(Dataset):
         self, index: int
     ) -> Union[torch.FloatTensor, Union[torch.FloatTensor, torch.LongTensor]]:
         """Implements the getitem method.
-
         Note:
             The following target dtype is expected:
             - BCEWithLogitsLoss expects a target.float()
             - CrossEntropyLoss expects a target.long()
-
         Args:
             index (int): index of the dataset.
-
         Returns:
             image (torch.FloatTensor): The image tensor.
             target (Union[torch.FloatTensor, torch.LongTensor]]): The target tensor.
@@ -161,7 +154,6 @@ class ImageClassificationDataset(Dataset):
     ) -> ImageClassificationDataset:
         """Creates an instance of the dataset class from a dataframe.
         This is the default way for now.
-
         Example:
             >>> from utils import create_dataframe_with_image_info
             >>> df = create_dataframe_with_image_info()
@@ -178,7 +170,6 @@ class ImageClassificationDataset(Dataset):
         **kwargs,
     ) -> ImageClassificationDataset:
         """Create a dataset from a folder.
-
         Note:
             The folder structure for train is assumed to be as follows:
             - train
@@ -203,7 +194,6 @@ class ImageClassificationDataset(Dataset):
 
 class CustomizedDataModule(ABC):
     """Base class for custom data module.
-
     References:
         - https://pytorch-lightning.readthedocs.io/en/latest/data/datamodule.html
         - https://github.com/Lightning-AI/lightning/blob/master/src/pytorch_lightning/core/hooks.py
@@ -224,12 +214,10 @@ class CustomizedDataModule(ABC):
     @abstractmethod
     def setup(self, stage: str) -> None:
         """See docstring in PyTorch Lightning.
-
         Example:
             if stage == "fit":
                 # assign train and valid datasets for use in dataloaders
                 pass
-
             if stage == "test":
                 # assign test dataset for use in dataloaders
                 pass
@@ -400,12 +388,7 @@ class ImageClassificationDataModule(CustomizedDataModule):
         print(f"Total number of test images: {len(test_images)}")
 
         if Path(self.pipeline_config.data.train_csv).exists():
-            # df = pd.read_csv(self.pipeline_config.data.train_csv)
-            df = create_dataframe_with_image_info(
-                train_images,
-                self.pipeline_config.data.class_name_to_id,
-                save_path=self.pipeline_config.data.train_csv,
-            )
+            df = pd.read_csv(self.pipeline_config.data.train_csv)
         else:
             df = create_dataframe_with_image_info(
                 train_images,
