@@ -14,7 +14,11 @@ from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter
 from src.callbacks.model_checkpoint import ModelCheckpoint
 from src.callbacks.wandb_logger import WandbLogger
-from src.dataset import ImageClassificationDataModule, MNISTDataModule
+from src.dataset import (
+    ImageClassificationDataModule,
+    MNISTDataModule,
+    RSNABreastDataModule,
+)
 from src.model import ImageClassificationModel, MNISTModel
 from src.trainer import Trainer
 from src.utils.general_utils import seed_all, free_gpu_memory
@@ -147,8 +151,48 @@ def train_mnist(pipeline_config: PipelineConfig) -> None:
     print(history["valid_loss"])
     print(history["val_Accuracy"])
     print(history["val_AUROC"])
-    # print(trainer.history["valid_probs"][0].shape)
-    # print(trainer.history["valid_probs"][1].shape)
+
+
+def train_one_fold_rsna(pipeline_config: PipelineConfig, fold: int) -> None:
+    """Train one fold on a Generic Image Dataset with a Resampling Strategy.
+    This is the precursor to training on all folds."""
+    num_classes = pipeline_config.global_train_params.num_classes
+    num_folds = pipeline_config.resample.resample_params["n_splits"]
+
+    dm = RSNABreastDataModule(pipeline_config)
+    dm.prepare_data(fold)
+
+    model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+    metrics_collection = MetricCollection(
+        [
+            Accuracy(num_classes=num_classes),
+            Precision(num_classes=num_classes, average="macro"),
+            Recall(num_classes=num_classes, average="macro"),
+            AUROC(num_classes=num_classes, average="macro"),
+            MulticlassCalibrationError(
+                num_classes=num_classes
+            ),  # similar to brier loss
+        ]
+    )
+    trainer = Trainer(
+        pipeline_config=pipeline_config,
+        model=model,
+        metrics=metrics_collection,
+        callbacks=[
+            History(),
+            MetricMeter(),
+            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
+        ],
+    )
+
+    dm.setup(stage="fit")
+    train_loader = dm.train_dataloader()
+    valid_loader = dm.valid_dataloader()
+    history = trainer.fit(train_loader, valid_loader, fold=fold)
+    print("Valid Loss", history["valid_loss"])
+    print("Valid Acc", history["val_Accuracy"])
+    print("Valid AUROC", history["val_AUROC"])
 
 
 def parse_opt() -> argparse.Namespace:
@@ -181,6 +225,8 @@ def run(opt: argparse.Namespace) -> None:
 
     if config_name == "mnist_params":
         train_mnist(pipeline_config)
+    elif "rsna_breast" in config_name:
+        train_one_fold_rsna(pipeline_config, fold=1)
     elif "_cv_" in config_name:
         train_one_fold(pipeline_config, fold=1)
     else:

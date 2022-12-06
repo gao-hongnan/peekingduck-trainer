@@ -19,6 +19,7 @@ import torchinfo
 from torchinfo.model_statistics import ModelStatistics
 import torchvision
 from torch import nn
+import timm
 
 from configs.base_params import PipelineConfig
 from src.utils.general_utils import seed_all
@@ -118,10 +119,13 @@ class ImageClassificationModel(Model):
     def __init__(self, pipeline_config: PipelineConfig) -> None:
         super().__init__(pipeline_config)
 
+        self.adaptor = self.pipeline_config.model.adaptor
         self.backbone = self.load_backbone()
         self.head = self.modify_head()
         self.model = self.create_model()
+
         # self.model.apply(self._init_weights) # activate if init weights
+        print("Successfully created model.")
 
     def create_model(self) -> nn.Module:
         """Create the model.
@@ -135,9 +139,16 @@ class ImageClassificationModel(Model):
 
     def load_backbone(self) -> nn.Module:
         """Load the backbone of the model."""
-        backbone = getattr(torchvision.models, self.pipeline_config.model.model_name)(
-            pretrained=self.pipeline_config.model.pretrained
-        )
+        if self.adaptor == "torchvision":
+            backbone = getattr(self.adaptor, self.pipeline_config.model.model_name)(
+                pretrained=self.pipeline_config.model.pretrained
+            )
+        elif self.adaptor == "timm":
+            backbone = timm.create_model(
+                self.pipeline_config.model.model_name,
+                pretrained=self.pipeline_config.model.pretrained,
+                # in_chans=3,
+            )
         return backbone
 
     def modify_head(self) -> nn.Module:

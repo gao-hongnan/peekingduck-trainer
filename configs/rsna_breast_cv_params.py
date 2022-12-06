@@ -26,7 +26,7 @@ class Data:
     image_col_name: str = "image_id_final"
     image_path_col_name: str = "image_path"
     group_by: str = "patient_id"
-    stratify_by: Optional[str] = None
+    stratify_by: Optional[str] = "cancer"
     target_col_name: str = "cancer"
     image_extension: str = ".png"
     class_name_to_id: Optional[Dict[str, int]] = field(
@@ -38,9 +38,9 @@ class Data:
         """Post init method for dataclass."""
         self.data_dir = Path(config.DATA_DIR) / "rsna_breast_cancer_detection"
         self.train_dir = self.data_dir / "train"
-        self.train_csv = self.data_dir / "train.csv"
+        self.train_csv = self.train_dir / "train.csv"
         self.test_dir = self.data_dir / "test"
-        self.test_csv = self.data_dir / "test.csv"
+        self.test_csv = self.test_dir / "test.csv"
         self.class_id_to_name = {v: k for k, v in self.class_name_to_id.items()}
 
     @property
@@ -68,7 +68,8 @@ class Resampling:
 class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
-    debug: bool = False
+    debug: bool = True
+    num_debug_samples: int = 1280
 
     test_loader: Optional[Dict[str, Any]] = field(
         default_factory=lambda: {
@@ -120,8 +121,8 @@ class AugmentationParams:
 
     image_size: int = 224
     pre_center_crop: int = 256
-    mean: List[float] = field(default_factory=lambda: [0.485, 0.456, 0.406])
-    std: List[float] = field(default_factory=lambda: [0.229, 0.224, 0.225])
+    mean: List[float] = field(default_factory=lambda: [0.5, 0.5, 0.5])
+    std: List[float] = field(default_factory=lambda: [0.5, 0.5, 0.5])
 
     mixup: bool = False
     mixup_params: Optional[Dict[str, Any]] = None
@@ -156,8 +157,8 @@ class AugmentationParams:
 class ModelParams:
     """Class to keep track of the model parameters."""
 
-    model_name: str = "resnet50"
-    # adaptor: str = "torchvision/timm"
+    adaptor: str = "timm"
+    model_name: str = "seresnext50_32x4d"
     pretrained: bool = True
     num_classes: int = 2
     # dropout: float = 0.3  # 0.5

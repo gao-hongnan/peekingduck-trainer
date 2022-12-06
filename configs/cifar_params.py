@@ -155,9 +155,8 @@ class AugmentationParams:
 class ModelParams:
     """Class to keep track of the model parameters."""
 
-    # TODO: well know backbone models are usually from torchvision or timm.
+    adaptor: str = "torchvision"
     model_name: str = "resnet18"
-    # adaptor: str = "torchvision/timm"
     pretrained: bool = True
     num_classes: int = 10  # 2
     dropout: float = 0.3  # 0.5

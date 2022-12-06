@@ -33,6 +33,7 @@ from src.utils.general_utils import (
     return_list_of_files,
     seed_all,
     show,
+    return_filepath,
 )
 
 TransformTypes = Optional[Union[A.Compose, T.Compose]]
@@ -465,11 +466,9 @@ class RSNABreastDataModule(CustomizedDataModule):
                 stratify=df[self.pipeline_config.data.target_col_name],
                 **resample_params,
             )
-
         else:
             try:
                 cv = getattr(model_selection, resample_strategy)(**resample_params)
-
             except AttributeError as attr_err:
                 raise ValueError(
                     f"{resample_strategy} is not a valid resample strategy."
@@ -479,14 +478,12 @@ class RSNABreastDataModule(CustomizedDataModule):
                     f"Invalid resample params for {resample_strategy}."
                 ) from type_err
 
-            # FIXME: fatal step for now because if df is large,
-            # then this step will be run EVERY single time, redundant!
             for _fold, (_train_idx, valid_idx) in enumerate(
                 cv.split(df, stratify, groups)
             ):
                 df.loc[valid_idx, "fold"] = _fold + 1
             df["fold"] = df["fold"].astype(int)
-            df.to_csv("df.csv", index=False)
+
             print(
                 df.groupby(["fold", self.pipeline_config.data.target_col_name]).size()
             )
@@ -497,7 +494,6 @@ class RSNABreastDataModule(CustomizedDataModule):
         return train_df, valid_df
 
     def prepare_data(self, fold: Optional[int] = None) -> None:
-
         url = self.pipeline_config.data.url
         blob_file = self.pipeline_config.data.blob_file
         root_dir = self.pipeline_config.data.root_dir

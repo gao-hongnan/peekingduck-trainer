@@ -151,9 +151,9 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
     def on_fit_end(self) -> None:
         """Called AFTER fit ends."""
         # print(self.train_batch_dict)
-        print(self.valid_batch_dict)
+        # print(self.valid_batch_dict)
         # print(self.train_epoch_dict)
-        print(self.valid_epoch_dict)
+        # print(self.valid_epoch_dict)
         # print(self.train_history_dict)
         # print(self.valid_history_dict)
         free_gpu_memory(
