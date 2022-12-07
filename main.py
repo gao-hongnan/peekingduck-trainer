@@ -181,8 +181,8 @@ def train_one_fold_rsna(pipeline_config: PipelineConfig, fold: int) -> None:
         callbacks=[
             History(),
             MetricMeter(),
-            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
-            EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
+            ModelCheckpoint(mode="max", monitor="val_AUROC"),
+            EarlyStopping(mode="max", monitor="val_AUROC", patience=10),
         ],
     )
 
@@ -201,7 +201,7 @@ def parse_opt() -> argparse.Namespace:
     parser.add_argument(
         "--config-name",
         type=str,
-        default="cifar_params",
+        default="cifar10_params",
         help="The name of the config file.",
     )
     return parser.parse_args()
@@ -226,7 +226,7 @@ def run(opt: argparse.Namespace) -> None:
     if config_name == "mnist_params":
         train_mnist(pipeline_config)
     elif "rsna_breast" in config_name:
-        train_one_fold_rsna(pipeline_config, fold=1)
+        train_one_fold_rsna(pipeline_config, fold=2)
     elif "_cv_" in config_name:
         train_one_fold(pipeline_config, fold=1)
     else:
