@@ -150,6 +150,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             f"\nTraining on Fold {fold} and using {self.train_params.model_name}\n"
         )
         self.best_valid_loss = np.inf
+        self.current_fold = fold
 
     def on_fit_end(self) -> None:
         """Called AFTER fit ends."""
