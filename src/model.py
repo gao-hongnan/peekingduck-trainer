@@ -14,14 +14,15 @@ from abc import ABC, abstractmethod
 from typing import Any, Optional, Tuple
 
 import torch
+import torchvision
 import torch.nn.functional as F
 import torchinfo
 from torchinfo.model_statistics import ModelStatistics
-import torchvision
 from torch import nn
 import timm
 
 from configs.base_params import PipelineConfig
+from configs.global_params import PipelineConfig as GlobalPipelineConfig
 from src.utils.general_utils import seed_all
 
 
@@ -140,9 +141,9 @@ class ImageClassificationModel(Model):
     def load_backbone(self) -> nn.Module:
         """Load the backbone of the model."""
         if self.adaptor == "torchvision":
-            backbone = getattr(self.adaptor, self.pipeline_config.model.model_name)(
-                pretrained=self.pipeline_config.model.pretrained
-            )
+            backbone = getattr(
+                torchvision.models, self.pipeline_config.model.model_name
+            )(pretrained=self.pipeline_config.model.pretrained)
         elif self.adaptor == "timm":
             backbone = timm.create_model(
                 self.pipeline_config.model.model_name,
@@ -215,10 +216,11 @@ class MNISTModel(Model):
 
 if __name__ == "__main__":
     seed_all(42)
-    pipeline_config = PipelineConfig()
+
+    pipeline_config = GlobalPipelineConfig()
+
     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
     print(model.model_summary(device=pipeline_config.device))
 
     inputs = torch.randn(1, 3, 224, 224).to(pipeline_config.device)
-
     model.forward_pass(inputs)
