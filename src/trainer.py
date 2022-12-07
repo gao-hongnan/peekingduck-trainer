@@ -14,6 +14,7 @@ from configs.base_params import PipelineConfig
 from src.callbacks.callback import Callback
 from src.model import Model
 from src.utils.general_utils import free_gpu_memory, init_logger
+from src.metrics.metric import pfbeta_torch
 
 # TODO: clean up val vs valid naming confusions.
 def get_sigmoid_softmax(
@@ -94,6 +95,8 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         Returns:
             [type]: [description]
         """
+        probablistic_f1 = pfbeta_torch(y_trues, y_preds, beta=1)
+        print("probablistic_f1", probablistic_f1)
 
         self.train_metrics = self.metrics.clone(prefix="train_")
         self.valid_metrics = self.metrics.clone(prefix="val_")
@@ -186,6 +189,9 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             self.train_one_epoch(train_loader, _epoch)
             self.valid_one_epoch(valid_loader, _epoch)
 
+            # self.monitored_metric["metric_score"] = torch.clone(
+            #     torch.tensor(self.valid_history_dict[self.monitored_metric["monitor"]])
+            # ).detach()  # FIXME: one should not hardcode "valid_macro_auroc" here
             self.monitored_metric["metric_score"] = torch.clone(
                 self.valid_history_dict[self.monitored_metric["monitor"]]
             ).detach()  # FIXME: one should not hardcode "valid_macro_auroc" here
@@ -365,7 +371,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                 "valid_preds": valid_preds,
                 "valid_probs": valid_probs,
             }
-        )
+        )  # FIXME: potential difficulty in debugging since valid_epoch_dict is called in metrics meter
         self.valid_epoch_dict.update(valid_metrics_dict)
         # temporary stores current valid epochs info
         # FIXME: so now valid epoch dict and valid history dict are the same lol.
