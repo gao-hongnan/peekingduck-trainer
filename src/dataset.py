@@ -11,18 +11,19 @@ sys.path.insert(1, os.getcwd())
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Union, Tuple
+from typing import Optional, Tuple, Union
 
 import albumentations as A
 import cv2
+import numpy as np
 import pandas as pd
+import pydicom
 import torch
 import torchvision
 import torchvision.transforms as T
-
+from sklearn import model_selection
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision.datasets import MNIST
-from sklearn import model_selection
 
 from configs.base_params import PipelineConfig
 from src.augmentations import ImageClassificationTransforms
@@ -30,10 +31,10 @@ from src.utils.general_utils import (
     create_dataframe_with_image_info,
     download_to,
     extract_file,
+    return_filepath,
     return_list_of_files,
     seed_all,
     show,
-    return_filepath,
 )
 
 TransformTypes = Optional[Union[A.Compose, T.Compose]]
@@ -194,11 +195,7 @@ class ImageClassificationDataset(Dataset):
 
 
 class CustomizedDataModule(ABC):
-    """Base class for custom data module.
-    References:
-        - https://pytorch-lightning.readthedocs.io/en/latest/data/datamodule.html
-        - https://github.com/Lightning-AI/lightning/blob/master/src/pytorch_lightning/core/hooks.py
-    """
+    """Base class for custom data module."""
 
     def __init__(self, pipeline_config: Optional[PipelineConfig] = None) -> None:
         self.pipeline_config = pipeline_config
@@ -210,19 +207,10 @@ class CustomizedDataModule(ABC):
 
     def prepare_data(self, fold: Optional[int] = None) -> None:
         """See docstring in PyTorch Lightning."""
-        # download data here
 
     @abstractmethod
     def setup(self, stage: str) -> None:
-        """See docstring in PyTorch Lightning.
-        Example:
-            if stage == "fit":
-                # assign train and valid datasets for use in dataloaders
-                pass
-            if stage == "test":
-                # assign test dataset for use in dataloaders
-                pass
-        """
+        """See docstring in PyTorch Lightning."""
         raise NotImplementedError
 
     @abstractmethod
@@ -534,6 +522,21 @@ class RSNABreastDataModule(CustomizedDataModule):
             self.train_df = self.train_df.sample(num_debug_samples)
             self.valid_df = self.valid_df.sample(num_debug_samples)
 
+        # hardcode
+        test_df = pd.read_csv(self.pipeline_config.data.test_csv)
+        test_df["image_id_final"] = (
+            test_df["patient_id"].astype(str) + "/" + test_df["image_id"].astype(str)
+        )
+        test_df["image_path"] = test_df[self.pipeline_config.data.image_col_name].apply(
+            lambda x: return_filepath(
+                image_id=x,
+                folder=test_dir,
+                extension=".dcm",
+            )
+        )
+        self.test_df = test_df.drop_duplicates(subset="prediction_id")
+        # hardcode
+
     def setup(self, stage: str) -> None:
         """Assign train/val datasets for use in dataloaders."""
         if stage == "fit":
@@ -552,9 +555,15 @@ class RSNABreastDataModule(CustomizedDataModule):
                 stage="valid",
                 transforms=valid_transforms,
             )
-
-        if stage == "test":
-            raise NotImplementedError
+        elif stage == "test":
+            print(self.test_df)
+            test_transforms = self.transforms.test_transforms
+            self.test_dataset = ImageClassificationDataset(
+                self.pipeline_config,
+                df=self.test_df,
+                stage="test",
+                transforms=test_transforms,
+            )
 
     def train_dataloader(self) -> DataLoader:
         """Train dataloader."""
