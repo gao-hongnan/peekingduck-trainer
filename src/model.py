@@ -1,7 +1,4 @@
-"""Model Interface.
-This module defines the interface for all models.
-It follows the Strategy Pattern: https://github.com/msaroufim/ml-design-patterns.
-"""
+"""Model Interface that follows the Strategy Pattern."""
 from __future__ import annotations
 
 import os
@@ -13,13 +10,13 @@ import functools
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Tuple
 
+import timm
 import torch
-import torchvision
 import torch.nn.functional as F
 import torchinfo
-from torchinfo.model_statistics import ModelStatistics
+import torchvision
 from torch import nn
-import timm
+from torchinfo.model_statistics import ModelStatistics
 
 from configs.base_params import PipelineConfig
 from configs.global_params import PipelineConfig as GlobalPipelineConfig
@@ -110,11 +107,8 @@ class Model(ABC, nn.Module):
 
 
 class ImageClassificationModel(Model):
-    """An generic image classification model.
-
-    Note:
-        This is generic in the sense that it can be used for any image classification by just
-            modifying the head.
+    """A generic image classification model. This is generic in the sense that
+    it can be used for any image classification by just modifying the head.
     """
 
     def __init__(self, pipeline_config: PipelineConfig) -> None:
