@@ -57,7 +57,7 @@ class Resampling:
     resample_strategy: str = "StratifiedGroupKFold"  # same name as in scikit-learn
     resample_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "n_splits": 5,
+            "n_splits": 4,
             "random_state": 42,
             "shuffle": True,
         }
@@ -68,8 +68,8 @@ class Resampling:
 class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
-    debug: bool = True
-    num_debug_samples: int = 1280
+    debug: bool = False
+    num_debug_samples: int = 128
 
     test_loader: Optional[Dict[str, Any]] = field(
         default_factory=lambda: {
@@ -138,12 +138,21 @@ class AugmentationParams:
             [
                 T.ToPILImage(),
                 T.RandomResizedCrop(self.image_size),
-                T.RandomHorizontalFlip(),
+                T.RandomVerticalFlip(p=0.5),
+                T.RandomHorizontalFlip(p=0.5),
                 T.ToTensor(),
                 T.Normalize(self.mean, self.std),
             ]
         )
         self.valid_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.Resize(self.image_size),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+        self.test_transforms = T.Compose(
             [
                 T.ToPILImage(),
                 T.Resize(self.image_size),
@@ -190,24 +199,44 @@ class CriterionParams:
 
     train_criterion_name: str = "CrossEntropyLoss"
     valid_criterion_name: str = "CrossEntropyLoss"
+    # train_criterion_params: Dict[str, Any] = field(
+    #     default_factory=lambda: {
+    #         "weight": torch.tensor([1, 10]).cuda().float(),
+    #         "size_average": None,
+    #         "ignore_index": -100,
+    #         "reduce": None,
+    #         "reduction": "mean",
+    #         "label_smoothing": 0.3,
+    #     }
+    # )
+    # valid_criterion_params: Dict[str, Any] = field(
+    #     default_factory=lambda: {
+    #         "weight": torch.tensor([1, 10]).cuda().float(),
+    #         "size_average": None,
+    #         "ignore_index": -100,
+    #         "reduce": None,
+    #         "reduction": "mean",
+    #         "label_smoothing": 0.3,
+    #     }
+    # )
     train_criterion_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "weight": None,
+            "weight": torch.tensor([1, 10]).cuda().float(),
             "size_average": None,
             "ignore_index": -100,
             "reduce": None,
             "reduction": "mean",
-            "label_smoothing": 0.0,
+            "label_smoothing": 0.1,
         }
     )
     valid_criterion_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "weight": None,
+            "weight": torch.tensor([1, 10]).cuda().float(),
             "size_average": None,
             "ignore_index": -100,
             "reduce": None,
             "reduction": "mean",
-            "label_smoothing": 0.0,
+            "label_smoothing": 0.1,
         }
     )
 
@@ -225,6 +254,7 @@ class OptimizerParams:
             "amsgrad": False,
             "weight_decay": 1e-6,
             "eps": 1e-08,
+            # "warmup_prop": 0.1,
         }
     )
 
@@ -256,16 +286,16 @@ class GlobalTrainParams:
 
     debug: bool = False
     debug_multiplier: int = 128
-    epochs: int = 3  # 10 when not debug
+    epochs: int = 10  # 10 when not debug
     use_amp: bool = True
     mixup: bool = False
-    patience: int = 3
+    patience: int = 10
     model_name: str = "custom"
     num_classes: int = 2
     classification_type: str = "multiclass"
     monitored_metric: Dict[str, Any] = field(
         default_factory=lambda: {
-            "monitor": "val_Accuracy",
+            "monitor": "val_AUROC",
             "mode": "max",
         }
     )

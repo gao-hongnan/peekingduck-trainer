@@ -159,13 +159,10 @@ class AugmentationParams:
 
 @dataclass(frozen=False, init=True)
 class ModelParams:
-    """Class to keep track of the model parameters.
-
-    Currently model_name must be one of torchvision's model names, should
-    support timm as well."""
+    """Class to keep track of the model parameters."""
 
     model_name: str = "resnet18"
-    # adaptor: str = "torchvision/timm"
+    adaptor: str = "torchvision"
     pretrained: bool = True
     num_classes: int = 2  # 2
     dropout: float = 0.3  # 0.5
