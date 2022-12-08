@@ -95,7 +95,7 @@ class DataModuleParams:
 
     train_loader: Dict[str, Any] = field(
         default_factory=lambda: {
-            "batch_size": 32,
+            "batch_size": 16,
             "num_workers": 0,
             "pin_memory": True,
             "drop_last": False,
@@ -105,7 +105,7 @@ class DataModuleParams:
     )
     valid_loader: Dict[str, Any] = field(
         default_factory=lambda: {
-            "batch_size": 32,
+            "batch_size": 16,
             "num_workers": 0,
             "pin_memory": True,
             "drop_last": False,
@@ -119,8 +119,7 @@ class DataModuleParams:
 class AugmentationParams:
     """Class to keep track of the augmentation parameters."""
 
-    image_size: int = 224
-    pre_center_crop: int = 256
+    image_size: int = 512
     mean: List[float] = field(default_factory=lambda: [0.5, 0.5, 0.5])
     std: List[float] = field(default_factory=lambda: [0.5, 0.5, 0.5])
 
@@ -249,7 +248,7 @@ class OptimizerParams:
     optimizer_name: str = "AdamW"
     optimizer_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "lr": 1e-4,
+            "lr": 1e-4 / 2,  # 32 -> 16 so lr/2
             "betas": (0.9, 0.999),
             "amsgrad": False,
             "weight_decay": 1e-6,
