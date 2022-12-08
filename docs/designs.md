@@ -7,7 +7,12 @@
 #### Design Pattern
 
 This module defines the interface for all models.
-It follows the Strategy Pattern: https://github.com/msaroufim/ml-design-patterns.
+It follows the [**Strategy Pattern**](https://github.com/msaroufim/ml-design-patterns).
+
+Users must implement the following methods:
+
+- `create_model`: This method creates the model and returns it.
+- `forward`: This method defines the forward pass of the model.
 
 ## Dataset
 
@@ -35,3 +40,16 @@ It follows the Strategy Pattern: https://github.com/msaroufim/ml-design-patterns
 
 if folder do by indices?
 if df do by indices?
+
+
+## Augmentations
+
+### Transforms
+
+#### Design Pattern
+
+## References
+
+- https://refactoring.guru/design-patterns/strategy
+- https://refactoring.guru/design-patterns/strategy/python/example
+- https://github.com/msaroufim/ml-design-patterns

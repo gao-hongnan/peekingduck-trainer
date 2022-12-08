@@ -41,13 +41,12 @@ class Model(ABC, nn.Module):
         """
         raise NotImplementedError("Please implement your own model.")
 
-    def load_backbone(self) -> nn.Module:
-        """Load the backbone of the model.
+    @abstractmethod
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the model."""
 
-        Note:
-            1. This typically is loaded from timm or torchvision.
-            2. This is not mandatory since users can just create it in create_model.
-        """
+    def load_backbone(self) -> nn.Module:
+        """Load the backbone of the model."""
 
     def modify_head(self) -> nn.Module:
         """Modify the head of the model."""
@@ -61,8 +60,9 @@ class Model(ABC, nn.Module):
     def extract_embeddings(self, inputs: torch.Tensor) -> torch.Tensor:
         """Extract the embeddings from the model.
 
-        Note:
-            This is used for metric learning or clustering.
+        NOTE:
+            Users can use feature embeddings to do metric learning or clustering,
+            as well as other tasks.
 
         Sample Implementation:
             ```python
@@ -70,10 +70,6 @@ class Model(ABC, nn.Module):
                 return self.backbone(inputs)
             ```
         """
-
-    @abstractmethod
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        """Forward pass of the model."""
 
     def model_summary(
         self, input_size: Optional[Tuple[int, int, int, int]] = None, **kwargs: Any
@@ -123,17 +119,17 @@ class ImageClassificationModel(Model):
         print("Successfully created model.")
 
     def create_model(self) -> nn.Module:
-        """Create the model.
-        NOTE:
-        1. Ask team whether it is sensible to use self here even though
-            create_model takes in backbone and head.
-        2. Check TIMM on he does it elegantly?
-        """
+        """Create the model."""
         self.backbone.fc = self.head
         return self.backbone
 
     def load_backbone(self) -> nn.Module:
-        """Load the backbone of the model."""
+        """Load the backbone of the model.
+
+        NOTE:
+            1. Backbones are usually loaded from timm or torchvision.
+            2. This is not mandatory since users can just create it in create_model.
+        """
         if self.adaptor == "torchvision":
             backbone = getattr(
                 torchvision.models, self.pipeline_config.model.model_name
@@ -149,10 +145,11 @@ class ImageClassificationModel(Model):
     def modify_head(self) -> nn.Module:
         """Modify the head of the model.
 
-        NOTE/TODO: This part is very tricky, to modify the head,
-        the penultimate layer of the backbone is taken, but different
-        models will have different names for the penultimate layer.
-        Maybe see my old code for reference where I check for it?
+        NOTE/TODO:
+            This part is very tricky, to modify the head,
+            the penultimate layer of the backbone is taken, but different
+            models will have different names for the penultimate layer.
+            Maybe see my old code for reference where I check for it?
         """
         in_features = self.backbone.fc.in_features  # fc is hardcoded
         out_features = self.pipeline_config.model.num_classes
