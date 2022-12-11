@@ -279,9 +279,7 @@ class CallbackParams:
 class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
 
-    device: str = field(init=False)
     seed: int = 1992
-    all_params: Dict[str, Any] = field(default_factory=dict)
 
     data: Data = Data()
     resample: Resampling = Resampling()
@@ -293,12 +291,3 @@ class PipelineConfig(AbstractPipelineConfig):
     optimizer_params: OptimizerParams = OptimizerParams()
     scheduler_params: SchedulerParams = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
-
-    def __post_init__(self) -> None:
-        # see utils.set_device
-        self.os = sys.platform
-        if self.os == "darwin":
-            self.device = "mps" if torch.backends.mps.is_available() else "cpu"
-        else:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.all_params = self.to_dict()

@@ -1,5 +1,25 @@
 # Design Patters
 
+## Dependency Injection
+
+- Composition > Inheritance as the latter has high coupling.
+- This is a design pattern (creational pattern) that allows us to implement loose coupling in software design?
+- Class not responsible for creating its dependencies.
+- Creation
+
+If object A depends on object B, object A must not create import object B directly. Instead of this, object A must provide a way for injecting object B. The responsibility of object creation and dependency injection are delegated to external code.
+
+Why use Dependency Injection in your code?
+
+- Flexibility of configurable components — As the components are externally configured, there can be various definitions for a component(Control on application structure).
+- Testing Made Easy — Instantiating mock objects and integrating with class definitions is easier.
+- High cohesion — Code with reduced module complexity, increased module reusability.
+- Minimalistic dependencies — As the dependencies are clearly defined, easier to eliminate/reduce unnecessary dependencies.
+
+### Pipeline Config
+
+- Inheritance: `PipelineConfig` inherits from `AbstractPipelineConfig` which 
+
 ## Model
 
 ### **Base Model Class**

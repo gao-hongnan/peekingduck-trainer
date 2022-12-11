@@ -264,10 +264,4 @@ class PipelineConfig(AbstractPipelineConfig):
     criterion_params: CriterionParams = CriterionParams()
 
     def __post_init__(self) -> None:
-        # see utils.set_device
-        self.os = sys.platform
-        if self.os == "darwin":
-            self.device = "mps" if torch.backends.mps.is_available() else "cpu"
-        else:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.all_params = self.to_dict()
