@@ -115,7 +115,7 @@ class ImageClassificationModel(Model):
         self.model = self.create_model()
 
         # self.model.apply(self._init_weights) # activate if init weights
-        print("Successfully created model.")
+        print(f"Successfully created model: {self.pipeline_config.model.model_name}")
 
     def create_model(self) -> nn.Module:
         """Create the model."""

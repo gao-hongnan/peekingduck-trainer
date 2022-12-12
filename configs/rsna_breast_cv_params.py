@@ -294,7 +294,6 @@ class GlobalTrainParams:
     use_amp: bool = True
     mixup: bool = False
     patience: int = 10
-    model_name: str = "custom"
     num_classes: int = 2
     classification_type: str = "multiclass"
     monitored_metric: Dict[str, Any] = field(

@@ -145,9 +145,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
 
     def on_fit_start(self, fold: int) -> None:
         """Called AFTER fit begins."""
-        self.logger.info(
-            f"\nTraining on Fold {fold} and using {self.train_params.model_name}\n"
-        )
+        self.logger.info(f"Fold {fold} started")
         self.best_valid_loss = np.inf
         self.current_fold = fold
 

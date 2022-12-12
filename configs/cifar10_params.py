@@ -261,7 +261,6 @@ class GlobalTrainParams:
     use_amp: bool = True
     mixup: bool = False
     patience: int = 3
-    model_name: str = "custom"
     num_classes: int = 10
     classification_type: str = "multiclass"
 
