@@ -260,9 +260,7 @@ class GlobalTrainParams:
     epochs: int = 10  # 10 when not debug
     use_amp: bool = True
     patience: int = 3
-    num_classes: int = 10
     classification_type: str = "multiclass"
-
     monitored_metric: Dict[str, Any] = field(
         default_factory=lambda: {
             "monitor": "val_Accuracy",

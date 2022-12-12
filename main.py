@@ -21,7 +21,7 @@ from src.utils.general_utils import seed_all, free_gpu_memory
 
 def train_generic(pipeline_config: PipelineConfig) -> None:
     """Train on Generic Image Dataset with Train-Valid-Test Split."""
-    num_classes = pipeline_config.global_train_params.num_classes
+    num_classes = pipeline_config.model.num_classes
 
     dm = ImageClassificationDataModule(pipeline_config)
     dm.prepare_data()
@@ -60,7 +60,7 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
 def train_one_fold(pipeline_config: PipelineConfig, fold: int) -> None:
     """Train one fold on a Generic Image Dataset with a Resampling Strategy.
     This is the precursor to training on all folds."""
-    num_classes = pipeline_config.global_train_params.num_classes
+    num_classes = pipeline_config.model.num_classes
     num_folds = pipeline_config.resample.resample_params["n_splits"]
 
     dm = ImageClassificationDataModule(pipeline_config)
@@ -99,7 +99,7 @@ def train_one_fold(pipeline_config: PipelineConfig, fold: int) -> None:
 
 def train_mnist(pipeline_config: PipelineConfig) -> None:
     """Train MNIST."""
-    num_classes = pipeline_config.global_train_params.num_classes  # 10
+    num_classes = pipeline_config.model.num_classes
     dm = MNISTDataModule(pipeline_config)
     dm.prepare_data()
 
@@ -139,7 +139,7 @@ def train_mnist(pipeline_config: PipelineConfig) -> None:
 def train_one_fold_rsna(pipeline_config: PipelineConfig, fold: int) -> None:
     """Train one fold on a Generic Image Dataset with a Resampling Strategy.
     This is the precursor to training on all folds."""
-    num_classes = pipeline_config.global_train_params.num_classes
+    num_classes = pipeline_config.model.num_classes
     num_folds = pipeline_config.resample.resample_params["n_splits"]
 
     dm = RSNABreastDataModule(pipeline_config)
