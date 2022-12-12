@@ -326,5 +326,3 @@ class PipelineConfig(AbstractPipelineConfig):
     scheduler_params: SchedulerParams = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
 
-    def __post_init__(self) -> None:
-        self.all_params = self.to_dict()

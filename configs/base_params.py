@@ -22,9 +22,12 @@ class AbstractPipelineConfig(ABC):
     def set_device(self) -> str:
         """Get the device."""
         if self.os == "darwin":
-            self.device = "mps" if torch.backends.mps.is_available() else "cpu"
+            device = "mps" if torch.backends.mps.is_available() else "cpu"
         else:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        print(f"Using device: {device}")
+        return device
 
     def get_all_params(self) -> Dict[str, Any]:
         """Get all params."""
@@ -33,7 +36,7 @@ class AbstractPipelineConfig(ABC):
     def __post_init__(self) -> None:
         """Initialize the pipeline config.
         Currently only initializes the device."""
-        self.set_device()
+        self.device = self.set_device()
         self.all_params = self.get_all_params()
 
     @property

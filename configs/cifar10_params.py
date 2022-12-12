@@ -279,7 +279,9 @@ class CallbackParams:
 class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
 
+    device: str = field(init=False)
     seed: int = 1992
+    all_params: Dict[str, Any] = field(default_factory=dict)
 
     data: Data = Data()
     resample: Resampling = Resampling()
@@ -291,3 +293,5 @@ class PipelineConfig(AbstractPipelineConfig):
     optimizer_params: OptimizerParams = OptimizerParams()
     scheduler_params: SchedulerParams = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
+
+

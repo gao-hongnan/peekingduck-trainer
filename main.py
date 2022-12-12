@@ -217,6 +217,7 @@ def run(opt: argparse.Namespace) -> None:
 
     config_path = base_config_path + config_name
     project = importlib.import_module(config_path)
+    print("Project Config:", project)
 
     pipeline_config = project.PipelineConfig()
     print("Pipeline Config:")

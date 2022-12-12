@@ -135,7 +135,6 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         )
         self.patience_counter = self.train_params.patience  # Early Stopping Counter
         self.current_epoch = 1
-        self.current_fold = None
         self.train_epoch_dict = {}
         self.valid_epoch_dict = {}
         self.train_batch_dict = {}
@@ -151,6 +150,8 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         )
         self.best_valid_loss = np.inf
         self.current_fold = fold
+        print("self.current_fold", self.current_fold)
+        print("self.best_valid_loss", self.best_valid_loss)
 
     def on_fit_end(self) -> None:
         """Called AFTER fit ends."""

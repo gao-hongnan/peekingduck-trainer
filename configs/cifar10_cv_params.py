@@ -154,9 +154,8 @@ class AugmentationParams:
 class ModelParams:
     """Class to keep track of the model parameters."""
 
-    # TODO: well know backbone models are usually from torchvision or timm.
+    adaptor: str = "torchvision"
     model_name: str = "resnet18"
-    # adaptor: str = "torchvision/timm"
     pretrained: bool = True
     num_classes: int = 10  # 2
     dropout: float = 0.3  # 0.5
@@ -293,12 +292,3 @@ class PipelineConfig(AbstractPipelineConfig):
     optimizer_params: OptimizerParams = OptimizerParams()
     scheduler_params: SchedulerParams = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
-
-    def __post_init__(self) -> None:
-        # see utils.set_device
-        self.os = sys.platform
-        if self.os == "darwin":
-            self.device = "mps" if torch.backends.mps.is_available() else "cpu"
-        else:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.all_params = self.to_dict()

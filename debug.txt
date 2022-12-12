@@ -9,3 +9,6 @@ C:\Users\gaohn\gao_hongnan\peekingduck-trainer\stores\logs\CIFAR-10\7a09cce5-9c1
 
 CIFAR no debug
 C:\Users\gaohn\gao_hongnan\peekingduck-trainer\stores\logs\CIFAR-10\c4414e62-2afa-48cf-91d2-aec9de4f55c7
+
+CIFAR FOLD 1 debug
+C:\Users\gaohn\gao_hongnan\peekingduck-trainer\stores\logs\CIFAR-10\daa5456b-72ad-4e0c-83a2-3eb25cb4b113
