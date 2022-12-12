@@ -325,4 +325,3 @@ class PipelineConfig(AbstractPipelineConfig):
     optimizer_params: OptimizerParams = OptimizerParams()
     scheduler_params: SchedulerParams = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
-
