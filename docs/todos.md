@@ -1,10 +1,45 @@
 # TODOs
 
-- model_checkpoint
-- early_stopping
+```
+@dataclass(frozen=False, init=True)
+class GlobalTrainParams:
+    """Train params, a lot of overlapping.
+    FIXME: overlapping with other params.
+    """
+
+    epochs: int = 10  # 10 when not debug
+    use_amp: bool = True
+    patience: int = 3
+    classification_type: str = "multiclass"
+    monitored_metric: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "monitor": "val_Accuracy",
+            "mode": "max",
+        }
+    )
+
+
+@dataclass(frozen=False, init=True)
+class CallbackParams:
+    """Callback params."""
+
+    callbacks: List[Callback] = field(
+        default_factory=lambda: [
+            History(),
+            MetricMeter(),
+            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
+        ]
+    )
+```
+
+The problem is that we have a lot of overlapping params. We need to clean this up.
+For example patience is used in both `GlobalTrainParams` and `CallbackParams`.
+Furthermore, `monitored_metric` is used in both `GlobalTrainParams` and `CallbackParams`
+in a different way. We need them to be consistent.
+
 - LR finder
 - LR Scheduler
-- We need to add mixup/cutmix support, these SOTA techniques are common now.
 - https://scikit-learn.org/stable/modules/classes.html#module-sklearn.model_selection
     - messy implementation, we need to clean it up in cross validation. 
     - SUPER NOT ELEGANT.
