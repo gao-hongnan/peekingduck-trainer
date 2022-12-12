@@ -9,11 +9,6 @@ from torchmetrics.classification import MulticlassCalibrationError
 import argparse
 
 from configs.base_params import PipelineConfig
-from src.callbacks.early_stopping import EarlyStopping
-from src.callbacks.history import History
-from src.callbacks.metrics_meter import MetricMeter
-from src.callbacks.model_checkpoint import ModelCheckpoint
-from src.callbacks.wandb_logger import WandbLogger
 from src.dataset import (
     ImageClassificationDataModule,
     MNISTDataModule,
@@ -43,16 +38,14 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
             ),  # similar to brier loss
         ]
     )
+
+    callbacks = pipeline_config.callback_params.callbacks
+
     trainer = Trainer(
         pipeline_config=pipeline_config,
         model=model,
         metrics=metrics_collection,
-        callbacks=[
-            History(),
-            MetricMeter(),
-            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
-            EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
-        ],
+        callbacks=callbacks,
     )
 
     dm.setup(stage="fit")
@@ -85,16 +78,14 @@ def train_one_fold(pipeline_config: PipelineConfig, fold: int) -> None:
             ),  # similar to brier loss
         ]
     )
+
+    callbacks = pipeline_config.callback_params.callbacks
+
     trainer = Trainer(
         pipeline_config=pipeline_config,
         model=model,
         metrics=metrics_collection,
-        callbacks=[
-            History(),
-            MetricMeter(),
-            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
-            EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
-        ],
+        callbacks=callbacks,
     )
 
     dm.setup(stage="fit")
@@ -124,22 +115,14 @@ def train_mnist(pipeline_config: PipelineConfig) -> None:
             ),  # similar to brier loss
         ]
     )
+
+    callbacks = pipeline_config.callback_params.callbacks
+
     trainer = Trainer(
         pipeline_config=pipeline_config,
         model=model,
         metrics=metrics_collection,
-        callbacks=[
-            History(),
-            MetricMeter(),
-            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
-            EarlyStopping(mode="max", monitor="val_Accuracy", patience=2),
-            # WandbLogger(
-            #     project="MNIST",
-            #     entity="reighns",
-            #     name="MNIST_EXP_1",
-            #     config=pipeline_config.all_params,
-            # ),
-        ],
+        callbacks=callbacks,
     )
 
     dm.setup(stage="fit")
@@ -174,16 +157,14 @@ def train_one_fold_rsna(pipeline_config: PipelineConfig, fold: int) -> None:
             ),  # similar to brier loss
         ]
     )
+
+    callbacks = pipeline_config.callback_params.callbacks
+
     trainer = Trainer(
         pipeline_config=pipeline_config,
         model=model,
         metrics=metrics_collection,
-        callbacks=[
-            History(),
-            MetricMeter(),
-            ModelCheckpoint(mode="max", monitor="val_AUROC"),
-            EarlyStopping(mode="max", monitor="val_AUROC", patience=10),
-        ],
+        callbacks=callbacks,
     )
 
     dm.setup(stage="fit")

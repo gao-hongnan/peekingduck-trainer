@@ -1,13 +1,18 @@
-"""CIFAR10 configurations."""
+"""CIFAR10 with resampling strategy configurations."""
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-import sys
-import torch
+
 import torchvision.transforms as T
 
 from configs import config
 from configs.base_params import AbstractPipelineConfig
+from src.callbacks.callback import Callback
+from src.callbacks.early_stopping import EarlyStopping
+from src.callbacks.history import History
+from src.callbacks.metrics_meter import MetricMeter
+from src.callbacks.model_checkpoint import ModelCheckpoint
+from src.callbacks.wandb_logger import WandbLogger
 from src.utils.general_utils import generate_uuid4
 
 
@@ -271,7 +276,14 @@ class GlobalTrainParams:
 class CallbackParams:
     """Callback params."""
 
-    callbacks: List[str]  # = ["EarlyStopping", "ModelCheckpoint", "LRScheduler"]
+    callbacks: List[Callback] = field(
+        default_factory=lambda: [
+            History(),
+            MetricMeter(),
+            ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+            EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
+        ]
+    )
 
 
 @dataclass(frozen=False, init=True)
@@ -292,3 +304,4 @@ class PipelineConfig(AbstractPipelineConfig):
     optimizer_params: OptimizerParams = OptimizerParams()
     scheduler_params: SchedulerParams = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
+    callback_params: CallbackParams = CallbackParams()

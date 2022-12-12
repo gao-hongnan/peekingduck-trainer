@@ -19,7 +19,6 @@ from torch import nn
 from torchinfo.model_statistics import ModelStatistics
 
 from configs.base_params import PipelineConfig
-from configs.cifar10_params import PipelineConfig as Cifar10PipelineConfig
 from src.utils.general_utils import seed_all
 
 
@@ -205,13 +204,13 @@ class MNISTModel(Model):
         return inputs
 
 
-if __name__ == "__main__":
-    seed_all(42)
+# if __name__ == "__main__":
+#     seed_all(42)
 
-    pipeline_config = Cifar10PipelineConfig()
+#     pipeline_config = Cifar10PipelineConfig()
 
-    model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
-    print(model.model_summary(device=pipeline_config.device))
+#     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+#     print(model.model_summary(device=pipeline_config.device))
 
-    inputs = torch.randn(1, 3, 224, 224).to(pipeline_config.device)
-    model.forward_pass(inputs)
+#     inputs = torch.randn(1, 3, 224, 224).to(pipeline_config.device)
+#     model.forward_pass(inputs)
