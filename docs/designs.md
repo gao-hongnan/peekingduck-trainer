@@ -55,6 +55,17 @@ Users must implement the following methods:
     - https://pytorch-lightning.readthedocs.io/en/latest/data/datamodule.html
     - https://github.com/Lightning-AI/lightning/blob/master/src/pytorch_lightning/core/hooks.py
 
+```python
+class ImageClassificationDataModule(CustomizedDataModule):
+    """Data module for generic image classification dataset."""
+
+    def __init__(self, pipeline_config: Optional[PipelineConfig] = None) -> None:
+        super().__init__(pipeline_config)
+        self.pipeline_config = pipeline_config
+        self.transforms = ImageClassificationTransforms(pipeline_config)
+```
+
+violates the Dependency Inversion Principle since it depends on `ImageClassificationTransforms` which is a concrete class.
 
 ## Folder Structure
 
