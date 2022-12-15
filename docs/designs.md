@@ -9,6 +9,16 @@
 2. `AbstractPipelineConfig` is an **abstract** class that defines the **interface** for all pipeline configs. Note that this is an **abstraction** layer where both high-level and low-level modules depend on. 
 3. Almost all high level modules in the whole entire `src` folder depends on `AbstractPipelineConfig`.
 4. Service Locator vs Dependency Injection.
+5. https://www.dotnettricks.com/learn/dependencyinjection/understanding-inversion-of-control-dependency-injection-and-service-locator#:~:text=The%20Service%20Locator%20allows%20you,dependency%20from%20outside%20the%20class. 
+
+Service Locator is a software design pattern that also allows us to develop loosely coupled code. It implements the DIP principle and easier to use with an existing codebase as it makes the overall design looser without forcing changes to the public interface.
+
+The Service Locator pattern introduces a locator object that objects are used to resolve dependencies means it allows you to "resolve" a dependency within a class.
+6. So for our config is more closely resembles the Service Locator pattern. Both of which
+use the DIP principle. So they are quite similar. The reason it is more similar to the Service Locator pattern is because for each high level module that takes in `pipeline_config`, we need to further
+resolve the dependencies within the `pipeline_config` object (i.e. to get the `model_config`, `data_config`, `optimizer_config`, etc.).
+
+When you use a service locator, every class will have a dependency on your service locator. This is not the case with dependency injection. The dependency injector will typically be called only once at startup, to inject dependencies into the main class.
 
 ## Dependency Injection
 
