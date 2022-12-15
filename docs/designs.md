@@ -1,5 +1,12 @@
 # Design Patters
 
+## Questions
+
+1. `AbstractPipelineConfig` is an **abstract** class that defines the **interface** for all pipeline configs. Note that this is an **abstraction** layer where both high-level and low-level modules depend on. 
+2. Almost all high level modules in the whole entire `src` folder depends on `AbstractPipelineConfig`.
+3. 
+4. I think the better way 
+
 ## Dependency Injection
 
 - Composition > Inheritance as the latter has high coupling.
