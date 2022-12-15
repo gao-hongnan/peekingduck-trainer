@@ -2,10 +2,13 @@
 
 ## Questions
 
-1. `AbstractPipelineConfig` is an **abstract** class that defines the **interface** for all pipeline configs. Note that this is an **abstraction** layer where both high-level and low-level modules depend on. 
-2. Almost all high level modules in the whole entire `src` folder depends on `AbstractPipelineConfig`.
-3. 
-4. I think the better way 
+1. Dependency Injection/Inversion, use example of `dii/` folder. 
+   1. Technically, is this also strategy pattern? Similar? 
+   2. See Arjan's youtube comment for this, someone pointed out how they are similar?
+   3. I used the DIP + DI pattern in the `dii/` folder. DI is a legit design pattern.
+2. `AbstractPipelineConfig` is an **abstract** class that defines the **interface** for all pipeline configs. Note that this is an **abstraction** layer where both high-level and low-level modules depend on. 
+3. Almost all high level modules in the whole entire `src` folder depends on `AbstractPipelineConfig`.
+4. Service Locator vs Dependency Injection.
 
 ## Dependency Injection
 
