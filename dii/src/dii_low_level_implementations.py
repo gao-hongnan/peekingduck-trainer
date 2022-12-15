@@ -1,3 +1,5 @@
+"""This module is the low-level concrete implementations of the project. This module
+depend only on the abstract interface module."""
 from src.dii_base import Transforms  # from abstract interface import Transforms
 from typing import Callable
 

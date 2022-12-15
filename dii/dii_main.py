@@ -1,4 +1,5 @@
-from typing import Any, Callable
+"""This module is the composition of all the modules in the project. This module
+will depend on both the low-level and high-level modules."""
 from src.dii_low_level_implementations import (
     ImageClassificationTransforms,
     ImageSegmentationTransforms,
