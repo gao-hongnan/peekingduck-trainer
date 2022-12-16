@@ -1,5 +1,30 @@
 # Design Patters
 
+## Config Management
+
+- Problem 0: All of my params file has a class called `PipelineConfig`, which inherits
+from `AbstractPipelineConfig`. This is because I initially treated `PipelineConfig` as
+the "low level concrete implementation", and other classes such as `Trainer` and `Model`
+as "high level business logic", both of which depends on the abstract layer `AbstractPipelineConfig`. We then inject different variations of implementations of
+`AbstractPipelineConfig` into the high level business logic. 
+
+- Problem 1: Should my individual params class be child class of a parent such as
+as `Params`? Or should each individual params class has its own parent class? 
+    - `OptimizerParams(Params)` 
+    - `OptimizerParams(AbstractParams)`
+    - `OptimizerParams(AbstractOptimizerParams)`: The benefit of this we can validate
+    the params in the parent class for each individual params class. The con is that
+    we need to create a new parent class for each individual params class.
+
+- Problem 2: Overlapping of params, `monitored_metric` must coincide with `EarlyStopping`
+and `ModelCheckpoint` params. 
+  
+- Problem 3: Can consider moving `config.py`'s constant to a parent class such as 
+`AbstractParams` as part of the config management. Maybe as `property`?
+
+- Problem 4: Type hint should be of the abstract class, not the concrete class.
+
+
 ## Questions
 
 1. Dependency Injection/Inversion, use example of `dii/` folder. 
@@ -36,9 +61,7 @@ Why use Dependency Injection in your code?
 - High cohesion — Code with reduced module complexity, increased module reusability.
 - Minimalistic dependencies — As the dependencies are clearly defined, easier to eliminate/reduce unnecessary dependencies.
 
-### Pipeline Config
 
-- Inheritance: `PipelineConfig` inherits from `AbstractPipelineConfig` which 
 
 ## Model
 

@@ -1,6 +1,6 @@
 """This module is the high-level business logic of the project. This module will only
 depend on the abstract interface module. This module will not depend on any low-level
-concrete implementations.
+concrete implementations. Violating will cause your code to be highly coupled.
 
 Contrary to the violation example earlier, we have successfully decoupled the
 **injected** our dependency (the original ImageClassificationTransforms) as

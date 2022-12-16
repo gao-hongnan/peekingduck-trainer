@@ -1,5 +1,6 @@
 """This module is the composition of all the modules in the project. This module
-will depend on both the low-level and high-level modules."""
+will depend on both the low-level and high-level modules. This is the final step
+of the Dependency Inversion Principle (DIP) implementation + Dependency Injection."""
 from src.dii_low_level_implementations import (
     ImageClassificationTransforms,
     ImageSegmentationTransforms,
