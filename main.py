@@ -6,8 +6,8 @@ import pprint
 from pytorch_grad_cam import GradCAM
 from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
 from torchmetrics.classification import MulticlassCalibrationError
-import argparse
 
+from argparse import ArgumentParser, Namespace
 from configs.base_params import PipelineConfig
 from src.dataset import (
     ImageClassificationDataModule,
@@ -176,9 +176,9 @@ def train_one_fold_rsna(pipeline_config: PipelineConfig, fold: int) -> None:
     print("Valid AUROC", history["val_AUROC"])
 
 
-def parse_opt() -> argparse.Namespace:
+def parse_opt() -> Namespace:
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
     parser.add_argument(
         "--config-name",
         type=str,
@@ -190,7 +190,7 @@ def parse_opt() -> argparse.Namespace:
 
 # TODO: maybe when compiling pipeline config, we can save state of the config as callables,
 # like torchflare's self.state dict.
-def run(opt: argparse.Namespace) -> None:
+def run(opt: Namespace) -> None:
     """Run the pipeline."""
     base_config_path = "configs."
     config_name = opt.config_name
