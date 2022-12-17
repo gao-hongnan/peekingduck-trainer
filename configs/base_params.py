@@ -6,6 +6,22 @@ from typing import Any, Dict
 
 import torch
 
+# @dataclass(frozen=False, init=True)
+# class CallbackParams:
+#     """Callback params."""
+#     def some_meth(self):
+#         pass
+
+#     callbacks: List[Callback] = field(
+#         default_factory=lambda: [
+#             self.some_meth()
+#             History(),
+#             MetricMeter(),
+#             ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+#             EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
+#         ]
+#     )
+
 
 @dataclass(frozen=False, init=True)
 class AbstractPipelineConfig(ABC):
@@ -45,3 +61,50 @@ class AbstractPipelineConfig(ABC):
 @dataclass(frozen=False, init=True)
 class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
+
+
+# @dataclass(frozen=False, init=True)
+# class AbstractPipelineConfig(ABC):
+#     """The pipeline configuration class."""
+
+#     device: str = field(init=False, repr=False, default="cpu")
+#     os: str = sys.platform
+#     all_params: Dict[str, Any] = field(default_factory=dict)
+#     data: Data
+
+#     def to_dict(self) -> Dict[str, Any]:
+#         """Recursively convert dataclass obj as dict."""
+#         return asdict(self)
+
+
+@dataclass(frozen=False, init=True)
+class GlobalTrainParams:
+    """Train params, a lot of overlapping.
+    FIXME: overlapping with other params.
+    """
+
+    epochs: int = field(init=False)
+
+    def get_epoch(self):
+        return 10
+
+    def __post_init__(self):
+        self.epochs = self.get_epoch()
+
+
+# def __init__(self, epochs=self.get_epoch()):
+@dataclass(frozen=False, init=True)
+class AbstractGlobalTrainParams:
+    """Train params, a lot of overlapping.
+    FIXME: overlapping with other params.
+    """
+
+    epochs: int # uninitialized
+class GlobalTrainParams(Abstract...):
+   def get_epoch():
+       
+    def __post_init__(self):
+        self.epochs = self.get_epoch()
+        
+# shud not use get_epoch class method
+# property can be epoch

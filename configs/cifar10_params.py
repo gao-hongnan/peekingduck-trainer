@@ -270,7 +270,7 @@ class GlobalTrainParams:
 
 
 @dataclass(frozen=False, init=True)
-class CallbackParams:
+class CallbackParams:  # another instance attribute
     """Callback params."""
 
     callbacks: List[Callback] = field(
@@ -291,7 +291,8 @@ class PipelineConfig(AbstractPipelineConfig):
     seed: int = 1992
     all_params: Dict[str, Any] = field(default_factory=dict)
 
-    data: Data = Data()
+    data: Data = Data()  # they can rename whatever they want
+    # generic class inherit from abstract data, resample etc
     resample: Resampling = Resampling()
     datamodule: DataModuleParams = DataModuleParams()
     augmentation: AugmentationParams = AugmentationParams()
