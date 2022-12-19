@@ -2,7 +2,7 @@
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 
 import torch
 
@@ -77,34 +77,12 @@ class PipelineConfig(AbstractPipelineConfig):
 #         return asdict(self)
 
 
-@dataclass(frozen=False, init=True)
-class GlobalTrainParams:
-    """Train params, a lot of overlapping.
-    FIXME: overlapping with other params.
-    """
+@dataclass
+class TrainConfig(ABC):
+    """Abstract Base Class."""
 
     epochs: int = field(init=False)
-
-    def get_epoch(self):
-        return 10
-
-    def __post_init__(self):
-        self.epochs = self.get_epoch()
-
-
-# # def __init__(self, epochs=self.get_epoch()):
-# @dataclass(frozen=False, init=True)
-# class AbstractGlobalTrainParams:
-#     """Train params, a lot of overlapping.
-#     FIXME: overlapping with other params.
-#     """
-
-#     epochs: int # uninitialized
-# class GlobalTrainParams(Abstract...):
-#    def get_epoch():
-
-#     def __post_init__(self):
-#         self.epochs = self.get_epoch()
-
-# shud not use get_epoch class method
-# property can be epoch
+    use_amp: bool = field(init=False, default=False)
+    patience: Literal["inf"] = field(init=False, default=float("inf"))
+    classification_type: str = field(init=False)
+    monitored_metric: Dict[str, Any] = field(init=False)

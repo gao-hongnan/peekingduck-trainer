@@ -2,6 +2,22 @@
 
 ## Config Management
 
+> Need draw UML diagram for this.
+
+- `PipelineConfig` is the main config class,
+  - is **inherited** from `AbstractPipelineConfig`, which defines the **interface** for all pipeline configs.
+  - is a **composition**[^1] of all other configs, such as `ModelConfig`, `DataConfig`, `OptimizerConfig`, etc,
+  - is **injected** into all high level modules, such as `Trainer`, `Model`, `Dataset`, etc.
+  - is a **service locator** for all other configs, such as `ModelConfig`, `DataConfig`, `OptimizerConfig`, etc.
+
+- Each individual config class must have validation schema, to avoid invalid config
+  being passed into the pipeline. 
+
+[^1]: See [here](https://suneeta-mall.github.io/2022/03/15/hydra-pydantic-config-management-for-training-application.html#an-extension-using-structured-config)
+for example.
+
+### Problems
+
 - Problem 0: All of my params file has a class called `PipelineConfig`, which inherits
 from `AbstractPipelineConfig`. This is because I initially treated `PipelineConfig` as
 the "low level concrete implementation", and other classes such as `Trainer` and `Model`
