@@ -92,19 +92,19 @@ class GlobalTrainParams:
         self.epochs = self.get_epoch()
 
 
-# def __init__(self, epochs=self.get_epoch()):
-@dataclass(frozen=False, init=True)
-class AbstractGlobalTrainParams:
-    """Train params, a lot of overlapping.
-    FIXME: overlapping with other params.
-    """
+# # def __init__(self, epochs=self.get_epoch()):
+# @dataclass(frozen=False, init=True)
+# class AbstractGlobalTrainParams:
+#     """Train params, a lot of overlapping.
+#     FIXME: overlapping with other params.
+#     """
 
-    epochs: int # uninitialized
-class GlobalTrainParams(Abstract...):
-   def get_epoch():
-       
-    def __post_init__(self):
-        self.epochs = self.get_epoch()
-        
+#     epochs: int # uninitialized
+# class GlobalTrainParams(Abstract...):
+#    def get_epoch():
+
+#     def __post_init__(self):
+#         self.epochs = self.get_epoch()
+
 # shud not use get_epoch class method
 # property can be epoch
