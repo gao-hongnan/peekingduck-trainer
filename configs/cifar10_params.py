@@ -87,7 +87,7 @@ class Resampling:
 class DataModuleParams:
     """Class to keep track of the data loader parameters."""
 
-    debug: bool = True  # TODO: how to pass debug in argparse to here?
+    debug: bool = False  # TODO: how to pass debug in argparse to here?
     num_debug_samples: int = 128
 
     test_loader: Optional[Dict[str, Any]] = None

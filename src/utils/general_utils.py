@@ -399,10 +399,3 @@ def init_logger(
     logger.addHandler(file_handler)
     logger.propagate = False
     return logger
-
-
-########### Dataset Utils ###########
-
-import hashlib
-
-# Reference: https://github.com/pytorch/vision/blob/main/torchvision/datasets/utils.py

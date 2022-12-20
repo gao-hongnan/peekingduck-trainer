@@ -9,12 +9,12 @@ from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
 
-
 from configs.base_params import PipelineConfig
 from src.callbacks.callback import Callback
+from src.metrics.metric import pfbeta_torch
 from src.model import Model
 from src.utils.general_utils import free_gpu_memory, init_logger
-from src.metrics.metric import pfbeta_torch
+
 
 # TODO: clean up val vs valid naming confusions.
 def get_sigmoid_softmax(
@@ -69,7 +69,8 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         self.callbacks = callbacks
         self.metrics = metrics
         # TODO: if isinstance(metrics, list): convert to MetricCollection
-
+        # FIXME: init_logger should be a callback type, if not writing here suggests
+        # it really depends on the type of logger in init_logger.
         self.logger = init_logger(
             log_file=Path.joinpath(
                 self.pipeline_config.stores.logs_dir, "training.log"
