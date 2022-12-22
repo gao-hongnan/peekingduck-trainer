@@ -162,8 +162,8 @@ class Stores:
 class CriterionParams:
     """A class to track loss function parameters."""
 
-    train_criterion_name: str = "CrossEntropyLoss"
-    valid_criterion_name: str = "CrossEntropyLoss"
+    train_criterion: str = "CrossEntropyLoss"
+    valid_criterion: str = "CrossEntropyLoss"
     train_criterion_params: Dict[str, Any] = field(
         default_factory=lambda: {
             "weight": None,

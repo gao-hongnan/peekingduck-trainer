@@ -57,6 +57,8 @@ class TransformConfig(ABC):
     cutmix_params: Optional[Dict[str, Any]] = field(default=None)
 
     train_transforms: Union[T.Compose, A.Compose] = field(init=False, default=None)
+    valid_transforms: Union[T.Compose, A.Compose] = field(init=False, default=None)
+    test_transforms: Union[T.Compose, A.Compose] = field(init=False, default=None)
 
 
 @dataclass

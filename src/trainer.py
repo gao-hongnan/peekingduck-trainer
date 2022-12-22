@@ -21,10 +21,10 @@ def get_sigmoid_softmax(
     pipeline_config: PipelineConfig,
 ) -> Union[torch.nn.Sigmoid, torch.nn.Softmax]:
     """Get the sigmoid or softmax function depending on loss function."""
-    if pipeline_config.criterion_params.train_criterion_name == "BCEWithLogitsLoss":
+    if pipeline_config.criterion_params.train_criterion == "BCEWithLogitsLoss":
         return getattr(torch.nn, "Sigmoid")()
 
-    if pipeline_config.criterion_params.train_criterion_name == "CrossEntropyLoss":
+    if pipeline_config.criterion_params.train_criterion == "CrossEntropyLoss":
         return getattr(torch.nn, "Softmax")(dim=1)
 
 
@@ -424,11 +424,11 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         """
 
         if stage == "train":
-            loss_fn = getattr(torch.nn, criterion_params.train_criterion_name)(
+            loss_fn = getattr(torch.nn, criterion_params.train_criterion)(
                 **criterion_params.train_criterion_params
             )
         elif stage == "valid":
-            loss_fn = getattr(torch.nn, criterion_params.valid_criterion_name)(
+            loss_fn = getattr(torch.nn, criterion_params.valid_criterion)(
                 **criterion_params.valid_criterion_params
             )
         loss = loss_fn(y_logits, y_trues)
