@@ -1,7 +1,6 @@
 from __future__ import generators, print_function
 
 import importlib
-import pprint
 
 from pytorch_grad_cam import GradCAM
 from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
@@ -14,7 +13,7 @@ from src.dataset import (
     MNISTDataModule,
     RSNABreastDataModule,
 )
-from src.model import ImageClassificationModel, MNISTModel
+from src.models.model import ImageClassificationModel, MNISTModel
 from src.trainer import Trainer
 from src.utils.general_utils import seed_all, free_gpu_memory
 

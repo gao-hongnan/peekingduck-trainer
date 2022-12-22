@@ -12,7 +12,7 @@ from tqdm.auto import tqdm
 from configs.base_params import PipelineConfig
 from src.callbacks.callback import Callback
 from src.metrics.metric import pfbeta_torch
-from src.model import Model
+from src.models.model import Model
 from src.utils.general_utils import free_gpu_memory, init_logger
 
 
