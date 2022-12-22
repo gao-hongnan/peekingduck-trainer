@@ -64,6 +64,10 @@ does not return anything...see example above. Worth exploring.
     - With some reasoning and basis for the existence of this base class, how then do we reconcile the fact that it can technically be done in the config class via conditionals as well. 
 - 
 
+## Notations
+
+1. ---> means "depends on"
+
 
 ## Config Management
 
