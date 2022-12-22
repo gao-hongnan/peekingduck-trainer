@@ -6,28 +6,43 @@ from typing import Any, Dict, List, Optional, Union
 import torchvision.transforms as T
 
 from configs import config
-from configs.base_params import AbstractPipelineConfig
-from src.utils.general_utils import generate_uuid4
+from configs.base_params import (
+    AbstractPipelineConfig,
+    CallbackConfig,
+    CriterionConfig,
+    DataConfig,
+    DataModuleConfig,
+    ModelConfig,
+    OptimizerConfig,
+    ResamplingConfig,
+    SchedulerConfig,
+    StoresConfig,
+    TrainConfig,
+    TransformConfig,
+)
+from src.callbacks.callback import Callback
 from src.callbacks.early_stopping import EarlyStopping
 from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter
 from src.callbacks.model_checkpoint import ModelCheckpoint
 from src.callbacks.wandb_logger import WandbLogger
-from src.callbacks.callback import Callback
+from src.utils.general_utils import generate_uuid4
 
 
 @dataclass(frozen=False, init=True)
-class Data:
+class Data(DataConfig):
     """Class for data related params."""
 
     root_dir: Optional[Path] = config.DATA_DIR  # data/
+    train_dir: Union[str, Path] = field(init=False)
+
     url: Optional[
         str
     ] = "https://github.com/gao-hongnan/peekingduck-trainer/releases/download/v0.0.1-alpha/cifar10.zip"
     blob_file: Optional[str] = "cifar10.zip"
     train_csv: Union[str, Path] = field(init=False)
     test_csv: Union[str, Path] = field(init=False)
-    train_dir: Union[str, Path] = field(init=False)
+
     test_dir: Union[str, Path] = field(init=False)
     data_dir: Union[str, Path] = field(init=False)
     image_col_name: str = "image_id"
@@ -68,7 +83,7 @@ class Data:
 
 
 @dataclass(frozen=False, init=True)
-class Resampling:
+class Resampling(ResamplingConfig):
     """Class for cross validation."""
 
     # scikit-learn resampling strategy
@@ -84,10 +99,10 @@ class Resampling:
 
 
 @dataclass(frozen=False, init=True)
-class DataModuleParams:
+class DataModuleParams(DataModuleConfig):
     """Class to keep track of the data loader parameters."""
 
-    debug: bool = False  # TODO: how to pass debug in argparse to here?
+    debug: bool = True  # TODO: how to pass debug in argparse to here?
     num_debug_samples: int = 128
 
     test_loader: Optional[Dict[str, Any]] = None
@@ -120,7 +135,7 @@ class DataModuleParams:
 
 
 @dataclass(frozen=False, init=True)
-class AugmentationParams:
+class AugmentationParams(TransformConfig):
     """Class to keep track of the augmentation parameters."""
 
     image_size: int = 32
@@ -157,10 +172,10 @@ class AugmentationParams:
 
 
 @dataclass(frozen=False, init=True)
-class ModelParams:
+class ModelParams(ModelConfig):
     """Class to keep track of the model parameters."""
 
-    adaptor: str = "torchvision"
+    adapter: str = "torchvision"
     model_name: str = "resnet18"
     pretrained: bool = True
     num_classes: int = 10  # 2
@@ -168,7 +183,7 @@ class ModelParams:
 
 
 @dataclass(frozen=False, init=True)
-class Stores:
+class Stores(StoresConfig):
     """A class to keep track of model artifacts."""
 
     project_name: str = "CIFAR-10"
@@ -188,7 +203,7 @@ class Stores:
 
 
 @dataclass(frozen=False, init=True)
-class CriterionParams:
+class CriterionParams(CriterionConfig):
     """A class to track loss function parameters."""
 
     train_criterion: str = "CrossEntropyLoss"
@@ -216,11 +231,11 @@ class CriterionParams:
 
 
 @dataclass(frozen=False, init=True)
-class OptimizerParams:
+class OptimizerParams(OptimizerConfig):
     """A class to track optimizer parameters."""
 
     # batch size increase 2, lr increases a factor of 2 as well.
-    optimizer_name: str = "AdamW"
+    optimizer: str = "AdamW"
     optimizer_params: Dict[str, Any] = field(
         default_factory=lambda: {
             "lr": 3e-4,
@@ -233,10 +248,10 @@ class OptimizerParams:
 
 
 @dataclass(frozen=False, init=True)
-class SchedulerParams:
+class SchedulerParams(SchedulerConfig):
     """A class to track Scheduler Params."""
 
-    scheduler_name: str = "CosineAnnealingWarmRestarts"  # Debug
+    scheduler: str = "CosineAnnealingWarmRestarts"  # Debug
     scheduler_params: Dict[str, Any] = field(
         default_factory=lambda: {
             "T_0": 10,
@@ -252,7 +267,7 @@ class SchedulerParams:
 
 
 @dataclass(frozen=False, init=True)
-class GlobalTrainParams:
+class GlobalTrainParams(TrainConfig):
     """Train params, a lot of overlapping.
     FIXME: overlapping with other params.
     """
@@ -270,7 +285,7 @@ class GlobalTrainParams:
 
 
 @dataclass(frozen=False, init=True)
-class CallbackParams:  # another instance attribute
+class CallbackParams(CallbackConfig):
     """Callback params."""
 
     callbacks: List[Callback] = field(
@@ -287,15 +302,11 @@ class CallbackParams:  # another instance attribute
 class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
 
-    device: str = field(init=False)
-    seed: int = 1992
-    all_params: Dict[str, Any] = field(default_factory=dict)
-
     data: Data = Data()  # they can rename whatever they want
     # generic class inherit from abstract data, resample etc
     resample: Resampling = Resampling()
     datamodule: DataModuleParams = DataModuleParams()
-    augmentation: AugmentationParams = AugmentationParams()
+    transforms: AugmentationParams = AugmentationParams()
     model: ModelParams = ModelParams()
     stores: Stores = Stores()
     global_train_params: GlobalTrainParams = GlobalTrainParams()
@@ -303,3 +314,7 @@ class PipelineConfig(AbstractPipelineConfig):
     scheduler_params: SchedulerParams = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
     callback_params: CallbackParams = CallbackParams()
+
+    device: str = field(init=False)
+    seed: int = 1992
+    all_params: Dict[str, Any] = field(default_factory=dict)

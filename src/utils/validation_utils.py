@@ -73,6 +73,9 @@ class Validator:  # pylint: disable=too-few-public-methods
     Reference: https://gist.github.com/rochacbruno/978405e4839142e409f8402eece505e8
     """
 
+    # FIXME: currently do not work well because it uses __post_init__
+    # and some dataclass configs also has __post_init__, which overwrites this.
+    # either change name or use a different way to run validation.
     logger: logging.Logger = logging.getLogger(__name__)
 
     def __post_init__(self) -> None:

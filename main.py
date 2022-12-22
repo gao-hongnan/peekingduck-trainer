@@ -201,8 +201,10 @@ def run(opt: Namespace) -> None:
 
     pipeline_config = project.PipelineConfig()
     print("Pipeline Config:")
-    pp = pprint.PrettyPrinter(depth=4)
-    pp.pprint(pipeline_config.all_params)
+    print(str(pipeline_config))
+    # print(str(pipeline_config))
+    # pp = pprint.PrettyPrinter(depth=4)
+    # pp.pprint(pipeline_config.all_params)
 
     if config_name == "mnist_params":
         train_mnist(pipeline_config)

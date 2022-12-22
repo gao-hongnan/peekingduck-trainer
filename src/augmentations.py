@@ -54,16 +54,16 @@ class ImageClassificationTransforms(Transforms):
 
     @property
     def train_transforms(self) -> T.Compose:
-        return self.pipeline_config.augmentation.train_transforms
+        return self.pipeline_config.transforms.train_transforms
 
     @property
     def valid_transforms(self) -> T.Compose:
-        return self.pipeline_config.augmentation.valid_transforms
+        return self.pipeline_config.transforms.valid_transforms
 
     @property
     def test_transforms(self):
-        return self.pipeline_config.augmentation.test_transforms
+        return self.pipeline_config.transforms.test_transforms
 
     @property
     def debug_transforms(self) -> T.Compose:
-        return self.pipeline_config.augmentation.debug_transforms
+        return self.pipeline_config.transforms.debug_transforms

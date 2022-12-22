@@ -109,7 +109,7 @@ class ImageClassificationModel(Model):
     def __init__(self, pipeline_config: PipelineConfig) -> None:
         super().__init__(pipeline_config)
 
-        self.adaptor = self.pipeline_config.model.adaptor
+        self.adapter = self.pipeline_config.model.adapter
         self.backbone = self.load_backbone()
         self.head = self.modify_head()
         self.model = self.create_model()
@@ -129,11 +129,11 @@ class ImageClassificationModel(Model):
             1. Backbones are usually loaded from timm or torchvision.
             2. This is not mandatory since users can just create it in create_model.
         """
-        if self.adaptor == "torchvision":
+        if self.adapter == "torchvision":
             backbone = getattr(
                 torchvision.models, self.pipeline_config.model.model_name
             )(pretrained=self.pipeline_config.model.pretrained)
-        elif self.adaptor == "timm":
+        elif self.adapter == "timm":
             backbone = timm.create_model(
                 self.pipeline_config.model.model_name,
                 pretrained=self.pipeline_config.model.pretrained,

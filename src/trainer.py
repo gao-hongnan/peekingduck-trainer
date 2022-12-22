@@ -390,7 +390,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             Do not invoke self.model directly in this call as it may affect model initalization.
             https://stackoverflow.com/questions/70107044/can-i-define-a-method-as-an-attribute
         """
-        return getattr(torch.optim, optimizer_params.optimizer_name)(
+        return getattr(torch.optim, optimizer_params.optimizer)(
             model.parameters(), **optimizer_params.optimizer_params
         )
 
@@ -400,7 +400,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         scheduler_params: Dict[str, Any],
     ) -> torch.optim.lr_scheduler:
         """Get the scheduler for the optimizer."""
-        return getattr(torch.optim.lr_scheduler, scheduler_params.scheduler_name)(
+        return getattr(torch.optim.lr_scheduler, scheduler_params.scheduler)(
             optimizer=optimizer, **scheduler_params.scheduler_params
         )
 
