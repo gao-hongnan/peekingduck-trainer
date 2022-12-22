@@ -14,6 +14,20 @@ from src.callbacks.metrics_meter import MetricMeter
 from src.callbacks.model_checkpoint import ModelCheckpoint
 from src.callbacks.wandb_logger import WandbLogger
 from src.utils.general_utils import generate_uuid4
+from configs.base_params import (
+    AbstractPipelineConfig,
+    CallbackConfig,
+    CriterionConfig,
+    DataConfig,
+    DataModuleConfig,
+    ModelConfig,
+    OptimizerConfig,
+    ResamplingConfig,
+    SchedulerConfig,
+    StoresConfig,
+    TrainConfig,
+    TransformConfig,
+)
 
 
 @dataclass(frozen=False, init=True)
@@ -287,18 +301,18 @@ class CallbackParams:
 class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
 
+    data: DataConfig = Data()
+    resample: ResamplingConfig = Resampling()
+    datamodule: DataModuleConfig = DataModuleParams()
+    transforms: TransformConfig = AugmentationParams()
+    model: ModelConfig = ModelParams()
+    stores: StoresConfig = Stores()
+    global_train_params: TrainConfig = GlobalTrainParams()
+    optimizer_params: OptimizerConfig = OptimizerParams()
+    scheduler_params: SchedulerConfig = SchedulerParams()
+    criterion_params: CriterionParams = CriterionParams()
+    callback_params: CriterionConfig = CallbackParams()
+
     device: str = field(init=False)
     seed: int = 1992
     all_params: Dict[str, Any] = field(default_factory=dict)
-
-    data: Data = Data()
-    resample: Resampling = Resampling()
-    datamodule: DataModuleParams = DataModuleParams()
-    augmentation: AugmentationParams = AugmentationParams()
-    model: ModelParams = ModelParams()
-    stores: Stores = Stores()
-    global_train_params: GlobalTrainParams = GlobalTrainParams()
-    optimizer_params: OptimizerParams = OptimizerParams()
-    scheduler_params: SchedulerParams = SchedulerParams()
-    criterion_params: CriterionParams = CriterionParams()
-    callback_params: CallbackParams = CallbackParams()

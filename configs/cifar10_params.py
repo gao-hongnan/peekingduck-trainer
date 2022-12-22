@@ -102,7 +102,7 @@ class Resampling(ResamplingConfig):
 class DataModuleParams(DataModuleConfig):
     """Class to keep track of the data loader parameters."""
 
-    debug: bool = False  # TODO: how to pass debug in argparse to here?
+    debug: bool = True  # TODO: how to pass debug in argparse to here?
     num_debug_samples: int = 128
 
     test_loader: Optional[Dict[str, Any]] = None
@@ -294,6 +294,7 @@ class CallbackParams(CallbackConfig):
             MetricMeter(),
             ModelCheckpoint(mode="max", monitor="val_Accuracy"),
             EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
+            # WandbLogger(project="CIFAR-10", entity="hongnan-aisg"),
         ]
     )
 
@@ -302,18 +303,17 @@ class CallbackParams(CallbackConfig):
 class PipelineConfig(AbstractPipelineConfig):
     """The pipeline configuration class."""
 
-    data: Data = Data()  # they can rename whatever they want
-    # generic class inherit from abstract data, resample etc
-    resample: Resampling = Resampling()
-    datamodule: DataModuleParams = DataModuleParams()
-    transforms: AugmentationParams = AugmentationParams()
-    model: ModelParams = ModelParams()
-    stores: Stores = Stores()
-    global_train_params: GlobalTrainParams = GlobalTrainParams()
-    optimizer_params: OptimizerParams = OptimizerParams()
-    scheduler_params: SchedulerParams = SchedulerParams()
+    data: DataConfig = Data()
+    resample: ResamplingConfig = Resampling()
+    datamodule: DataModuleConfig = DataModuleParams()
+    transforms: TransformConfig = AugmentationParams()
+    model: ModelConfig = ModelParams()
+    stores: StoresConfig = Stores()
+    global_train_params: TrainConfig = GlobalTrainParams()
+    optimizer_params: OptimizerConfig = OptimizerParams()
+    scheduler_params: SchedulerConfig = SchedulerParams()
     criterion_params: CriterionParams = CriterionParams()
-    callback_params: CallbackParams = CallbackParams()
+    callback_params: CriterionConfig = CallbackParams()
 
     device: str = field(init=False)
     seed: int = 1992
