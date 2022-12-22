@@ -2,25 +2,72 @@
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Literal
-
+from typing import Any, Dict, Literal, Optional, Union, List
+from pathlib import Path
 import torch
+import torchvision.transforms as T
+import albumentations as A
 
-# @dataclass(frozen=False, init=True)
-# class CallbackParams:
-#     """Callback params."""
-#     def some_meth(self):
-#         pass
 
-#     callbacks: List[Callback] = field(
-#         default_factory=lambda: [
-#             self.some_meth()
-#             History(),
-#             MetricMeter(),
-#             ModelCheckpoint(mode="max", monitor="val_Accuracy"),
-#             EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
-#         ]
-#     )
+@dataclass
+class DataConfig(ABC):
+    """Abstract Base Class."""
+
+    root_dir: Path
+    train_dir: Path
+    valid_dir: Path
+    test_dir: Path
+
+    url: Optional[str] = field(default=None)
+
+
+@dataclass
+class ResamplingConfig(ABC):
+    """Abstract Base Class."""
+
+    resample_strategy: str
+    resample_params: Dict[str, Any]
+
+
+@dataclass
+class DataModuleConfig(ABC):
+    """Abstract Base Class."""
+
+    debug: bool
+    num_debug_samples: int
+
+    train_loader: Dict[str, Any]
+    valid_loader: Dict[str, Any]
+    test_loader: Dict[str, Any]
+
+
+@dataclass
+class TransformConfig(ABC):
+    """Abstract Base Class."""
+
+    image_size: int
+
+    mean: Optional[List[float]] = field(default=None)
+    std: Optional[List[float]] = field(default=None)
+
+    mixup: Optional[bool] = field(default=False)
+    mixup_params: Optional[Dict[str, Any]] = field(default=None)
+
+    cutmix: Optional[bool] = field(default=False)
+    cutmix_params: Optional[Dict[str, Any]] = field(default=None)
+
+    train_transforms: Union[T.Compose, A.Compose] = field(init=False, default=None)
+
+
+@dataclass
+class TrainConfig(ABC):
+    """Abstract Base Class."""
+
+    epochs: int
+    classification_type: str
+    monitored_metric: Dict[str, Any]
+    use_amp: bool = field(default=False)
+    patience: Literal["inf"] = field(default=float("inf"))
 
 
 @dataclass(frozen=False, init=True)
@@ -75,20 +122,3 @@ class PipelineConfig(AbstractPipelineConfig):
 #     def to_dict(self) -> Dict[str, Any]:
 #         """Recursively convert dataclass obj as dict."""
 #         return asdict(self)
-
-
-@dataclass
-class TrainConfig(ABC):
-    """Abstract Base Class."""
-
-    epochs: int
-    use_amp: bool = field(default=False)
-    patience: Literal["inf"] = field(default=float("inf"))
-    classification_type: str = field(init=False)
-    monitored_metric: Dict[str, Any] = field(init=False)
-
-    def validate_epochs(self, value: int, **_):
-        """Validate epochs."""
-        if value < 0:
-            raise ValueError("Epochs cannot be negative")
-        return value

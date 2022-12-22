@@ -8,21 +8,16 @@ import torch
 from src.utils.validation_utils import enforce_types, Validator
 
 
+@enforce_types
 @dataclass
-class TrainConfig(Validator, ABC):
+class TrainConfig(ABC):
     """Abstract Base Class."""
 
-    epochs: int = field(init=False)
-    use_amp: bool = False
-    patience: float = field(init=False, default=float("inf"))
-    classification_type: str = field(init=False)
-    monitored_metric: Dict[str, Any] = field(init=False)
-
-    def validate_epochs(self, value: int, **_):
-        """Validate epochs."""
-        if value < 0:
-            raise ValueError("Epochs cannot be negative")
-        return value
+    epochs: int
+    classification_type: str
+    monitored_metric: Dict[str, Any]
+    use_amp: bool = field(default=False)
+    patience: Literal["inf"] = field(default=float("inf"))
 
 
 @enforce_types
@@ -38,7 +33,7 @@ class MyTrain(TrainConfig):
 if __name__ == "__main__":
 
     train = MyTrain(
-        epochs=1, monitored_metric={"monitor": "val_Accuracy", "mode": "max"}
+        epochs=1.1, monitored_metric={"monitor": "val_Accuracy", "mode": "max"}
     )
     print(train)
     patience = train.patience

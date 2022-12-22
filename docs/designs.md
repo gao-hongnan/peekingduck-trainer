@@ -1,4 +1,69 @@
-# Design Patters
+# Design Patterns
+
+## New Ideas
+
+### Pipeline Pattern
+
+Compose/Pipeline example:
+
+```python
+import functools
+from typing import Callable
+
+ComposableFunction = Callable[[float], float]
+
+# Helper function for composing functions
+def compose(*functions: ComposableFunction) -> ComposableFunction:
+    return functools.reduce(lambda f, g: lambda x: g(f(x)), functions)
+
+
+def addThree(x: float) -> float:
+    return x + 3
+
+
+def multiplyByTwo(x: float) -> float:
+    return x * 2
+
+
+def addN(n: float) -> ComposableFunction:
+    return lambda x: x + n
+
+
+def main():
+    x = 12
+    # oldres = multiplyByTwo(multiplyByTwo(addThree(addThree(x))))
+    myfunc = compose(addN(3), addN(3), multiplyByTwo, multiplyByTwo)
+    result = myfunc(x)
+    print(f"Result: {result}")
+```
+
+For our use case, a bit like scikit-learn or huggingface, pseudocode:
+
+```python
+pipeline = Pipeline.Compose([
+    ImageClassificationDataModule(pipeline_config),
+    ImageClassificationModel(pipeline_config),
+    Trainer(pipeline_config),
+])
+pipeline.run()
+```
+
+This may require a bit of refactoring, such as ensure that input and output
+of each component is consistent (i.e. `pipeline_config` is passed in and out).
+This is currently not the case, for example, `ImageClassificationDataModule`
+does not return anything...see example above. Worth exploring.
+
+
+
+
+- Instead of user overriding base Transforms class, they can directly specify the transform augmentations in the config file. Yier pointed out that the current implementation makes the child class ImageClassificationTransforms moot. 
+    - To reconcile this, we think of why we need the base class in the first place. 
+    - The base class defines an abstract interface for low and high level modules to interact on. This serves as a bridge and also decouples the high and low level module. 
+    - The base class can eventually have a common __call__ method so that torchvision and albu for eg can have a consistent transform interface. 
+    - The base class can also become a strategy design pattern for training where user may change strategy mid way of training. It is common to use heavy transforms early and light transforms later in a NN. Users can have for eg Transform1-3 epoch and transform 4-6 epoch with mixup. 
+    - With some reasoning and basis for the existence of this base class, how then do we reconcile the fact that it can technically be done in the config class via conditionals as well. 
+- 
+
 
 ## Config Management
 
