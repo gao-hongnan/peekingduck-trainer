@@ -13,29 +13,32 @@ class TrainConfig(Validator, ABC):
     """Abstract Base Class."""
 
     epochs: int = field(init=False)
-    use_amp: bool = field(init=False, default=False)
+    use_amp: bool = False
     patience: float = field(init=False, default=float("inf"))
     classification_type: str = field(init=False)
     monitored_metric: Dict[str, Any] = field(init=False)
 
-
-@enforce_types
-@dataclass
-class MyTrain(TrainConfig):
-    epochs: int = 2
-    classification_type: str = "multiclass"
-    monitored_metric: Dict[str, Any] = field(
-        default_factory=lambda: {"monitor": "val_Accuracy", "mode": "max"}
-    )
-
-    def validate_epochs(self, value, **_):
+    def validate_epochs(self, value: int, **_):
+        """Validate epochs."""
         if value < 0:
             raise ValueError("Epochs cannot be negative")
         return value
 
 
+@enforce_types
+@dataclass
+class MyTrain(TrainConfig):
+    epochs: int
+    classification_type: str = "multiclass"
+    monitored_metric: Dict[str, Any] = field(
+        default_factory=lambda: {"monitor": "val_Accuracy", "mode": "max"}
+    )
+
+
 if __name__ == "__main__":
 
-    train = MyTrain(monitored_metric=[1, 2])
+    train = MyTrain(
+        epochs=1, monitored_metric={"monitor": "val_Accuracy", "mode": "max"}
+    )
     print(train)
     patience = train.patience

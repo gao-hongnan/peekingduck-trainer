@@ -81,8 +81,14 @@ class PipelineConfig(AbstractPipelineConfig):
 class TrainConfig(ABC):
     """Abstract Base Class."""
 
-    epochs: int = field(init=False)
-    use_amp: bool = field(init=False, default=False)
-    patience: Literal["inf"] = field(init=False, default=float("inf"))
+    epochs: int
+    use_amp: bool = field(default=False)
+    patience: Literal["inf"] = field(default=float("inf"))
     classification_type: str = field(init=False)
     monitored_metric: Dict[str, Any] = field(init=False)
+
+    def validate_epochs(self, value: int, **_):
+        """Validate epochs."""
+        if value < 0:
+            raise ValueError("Epochs cannot be negative")
+        return value

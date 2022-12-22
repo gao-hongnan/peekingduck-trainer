@@ -88,11 +88,11 @@ class Validator:  # pylint: disable=too-few-public-methods
                 f"{self.__class__.__name__} must be a dataclass "
                 f"with type annotations."
             )
-
         for name, field in self.__dataclass_fields__.items():
             validator_name = f"validate_{name}"
             if method := getattr(self, f"validate_{name}", None):
-                self.logger.debug(f"Running validation method {validator_name}.")
+                print(f"Running validation method {validator_name}.")
+                # self.logger.info(f"Running validation method {validator_name}.")
                 value = method(getattr(self, name), field=field)
                 # call the method with the field value and the field
                 setattr(self, name, value)
