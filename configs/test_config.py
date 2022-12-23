@@ -10,14 +10,19 @@ from src.utils.validation_utils import enforce_types, Validator
 
 @enforce_types
 @dataclass
-class TrainConfig(ABC):
+class TrainConfig(Validator, ABC):
     """Abstract Base Class."""
 
     epochs: int
     classification_type: str
     monitored_metric: Dict[str, Any]
     use_amp: bool = field(default=False)
-    patience: Literal["inf"] = field(default=float("inf"))
+    patience: float = field(default=float("inf"))
+
+    def validate_epochs(self, value: int, **_) -> int:
+        if value < 0:
+            raise ValueError("epochs must be >= 0")
+        return value
 
 
 @enforce_types
@@ -29,11 +34,16 @@ class MyTrain(TrainConfig):
         default_factory=lambda: {"monitor": "val_Accuracy", "mode": "max"}
     )
 
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.a: int = 2
+
 
 if __name__ == "__main__":
 
     train = MyTrain(
-        epochs=1.1, monitored_metric={"monitor": "val_Accuracy", "mode": "max"}
+        epochs=2, monitored_metric={"monitor": "val_Accuracy", "mode": "max"}
     )
     print(train)
+    print(train.a)
     patience = train.patience
