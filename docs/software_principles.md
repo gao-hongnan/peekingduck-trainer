@@ -15,45 +15,31 @@
 - The concept of keeping all the data and functions operating on the data related to a composite data type together within an abstraction barrier is called encapsulation.
 - A class is an example of an encapsulation.
 
+```python
+class Circle:
+    """A Circle object encapsulates a circle on a 2D plane.
+
+    NOTE: Circle class with cartesian coordinates.
+    """
+
+    def __init__(self, x, y, r):
+        self.x = x
+        self.y = y
+        self.r = r
+
+    def get_area(self):
+        """Return the area of the circle."""
+        return math.pi * self.r * self.r
+
+    def contains(self, x, y):
+        """Return true if the given point (x, y) is within the circle."""
+        return math.sqrt((self.x - x) ** 2 + (self.y - y) ** 2) <= self.r
+
+c = Circle(0, 0, 1)
+print(c.get_area())
+print(c.contains(0, 0))
+print(c.contains(1, 1))
+```
 
 ## Composition
-
-
-// version 0.4
-import java.lang.Math;
-
-/**
- * A Circle object encapsulates a circle on a 2D plane.  
- */
-class Circle {
-  private double x;  // x-coordinate of the center
-  private double y;  // y-coordinate of the center
-  private double r;  // the length of the radius
-
-  /**
-   * Create a circle centered on (x, y) with given radius
-  */
-  public Circle(double x, double y, double r) {
-    this.x = x;
-    this.y = y;
-    this.r = r;
-  }
-
-  /**
-   * Return the area of the circle.
-   */
-  public double getArea() {
-    return Math.PI * this.r * this.r;
-  }
-
-  /**
-   * Return true if the given point (x, y) is within the circle.
-   */
-  public boolean contains(double x, double y) {
-    return false; 
-    // TODO: Left as an exercise
-  }
-}
-
- in python
  
