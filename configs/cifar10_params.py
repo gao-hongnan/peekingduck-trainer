@@ -312,8 +312,8 @@ class PipelineConfig(AbstractPipelineConfig):
     global_train_params: TrainConfig = GlobalTrainParams()
     optimizer_params: OptimizerConfig = OptimizerParams()
     scheduler_params: SchedulerConfig = SchedulerParams()
-    criterion_params: CriterionParams = CriterionParams()
-    callback_params: CriterionConfig = CallbackParams()
+    criterion_params: CriterionConfig = CriterionParams()
+    callback_params: CallbackConfig = CallbackParams()
 
     device: str = field(init=False)
     seed: int = 1992
