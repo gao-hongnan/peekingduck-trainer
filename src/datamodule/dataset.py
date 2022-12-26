@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision.datasets import MNIST
 
 from configs.base_params import PipelineConfig
-from src.augmentations import ImageClassificationTransforms
+from src.transforms.augmentations import ImageClassificationTransforms
 from src.utils.general_utils import (
     create_dataframe_with_image_info,
     download_to,

@@ -54,6 +54,7 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
     print("Valid Loss", history["valid_loss"])
     print("Valid Acc", history["val_Accuracy"])
     print("Valid AUROC", history["val_AUROC"])
+    # print(history)
 
 
 def train_one_fold(pipeline_config: PipelineConfig, fold: int) -> None:
@@ -170,7 +171,7 @@ def train_one_fold_rsna(pipeline_config: PipelineConfig, fold: int) -> None:
     train_loader = dm.train_dataloader()
     valid_loader = dm.valid_dataloader()
     history = trainer.fit(train_loader, valid_loader, fold=fold)
-    print(history)
+
     print("Valid Loss", history["valid_loss"])
     print("Valid Acc", history["val_Accuracy"])
     print("Valid AUROC", history["val_AUROC"])
