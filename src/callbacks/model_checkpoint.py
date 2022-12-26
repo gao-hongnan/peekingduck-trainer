@@ -37,7 +37,7 @@ TODO:
 
 5. Currently initiating attributes in `__init__` and `on_train_start`, I think it may not
     be the best practice? But otherwise it makes sense to initiate some "when trainer starts".
-    
+
 6. Put all callbacks to pipeline_config.callbacks.
 
 FIXME:
@@ -71,7 +71,7 @@ from typing import Any, Dict
 
 import torch
 
-from src.callbacks.callback import Callback
+from src.callbacks.base import Callback
 from src.trainer import Trainer
 from src.utils.callback_utils import init_improvement
 

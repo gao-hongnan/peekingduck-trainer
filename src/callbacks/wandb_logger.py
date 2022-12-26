@@ -13,7 +13,7 @@ TODO:
 from abc import ABC
 from typing import Dict, List, Optional, Any
 
-from src.callbacks.callback import Callback
+from src.callbacks.base import Callback
 from src.trainer import Trainer
 
 try:

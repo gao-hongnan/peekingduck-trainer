@@ -8,7 +8,7 @@ NOTE:
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List
 
-from src.callbacks.callback import Callback
+from src.callbacks.base import Callback
 from src.trainer import Trainer
 
 

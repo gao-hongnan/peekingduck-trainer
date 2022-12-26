@@ -13,7 +13,7 @@ from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter
 from src.callbacks.model_checkpoint import ModelCheckpoint
 from src.callbacks.wandb_logger import WandbLogger
-from src.callbacks.callback import Callback
+from src.callbacks.base import Callback
 from configs.base_params import (
     AbstractPipelineConfig,
     CallbackConfig,

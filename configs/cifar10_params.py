@@ -20,7 +20,7 @@ from configs.base_params import (
     TrainConfig,
     TransformConfig,
 )
-from src.callbacks.callback import Callback
+from src.callbacks.base import Callback
 from src.callbacks.early_stopping import EarlyStopping
 from src.callbacks.history import History
 from src.callbacks.metrics_meter import MetricMeter

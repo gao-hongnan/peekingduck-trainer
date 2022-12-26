@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 from tabulate import tabulate
 import pandas as pd
 from configs.base_params import PipelineConfig
-from src.callbacks.callback import Callback
+from src.callbacks.base import Callback
 from src.metrics.metric import pfbeta_torch
 from src.models.model import Model
 from src.utils.general_utils import free_gpu_memory, init_logger

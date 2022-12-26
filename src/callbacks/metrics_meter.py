@@ -20,7 +20,7 @@ this is the average score of all batches in 1 epoch.
 """
 from collections import defaultdict
 
-from src.callbacks.callback import Callback
+from src.callbacks.base import Callback
 from src.trainer import Trainer
 
 # TODO:
