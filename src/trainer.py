@@ -8,7 +8,8 @@ import torch
 from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
-
+from tabulate import tabulate
+import pandas as pd
 from configs.base_params import PipelineConfig
 from src.callbacks.callback import Callback
 from src.metrics.metric import pfbeta_torch
@@ -97,13 +98,15 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             [type]: [description]
         """
         probablistic_f1 = pfbeta_torch(y_trues, y_preds, beta=1)
-        print("probablistic_f1", probablistic_f1)
+        # print("probablistic_f1", probablistic_f1)
 
         self.train_metrics = self.metrics.clone(prefix="train_")
         self.valid_metrics = self.metrics.clone(prefix="val_")
         train_metrics_results = self.train_metrics(y_probs, y_trues.flatten())
         valid_metrics_results = self.valid_metrics(y_probs, y_trues.flatten())
-        print(f"valid metrics: {valid_metrics_results}")
+        valid_metrics_results_df = pd.DataFrame.from_dict([valid_metrics_results])
+        print(f"valid_metrics:\n")
+        print(tabulate(valid_metrics_results_df, headers="keys", tablefmt="psql"))
         return train_metrics_results, valid_metrics_results
 
     def run(self):

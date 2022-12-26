@@ -2,6 +2,20 @@
 
 ## New Ideas
 
+### Composition Mixed
+
+Now the problem (ref to UML diagram) is that my composition is mixed, i.e. `Trainer`
+takes in `Model` as argument, and we say `Trainer` has-a `Model`. But this is not
+a consistent pattern because `Optimizer`, `Scheduler`, `Loss` etc can also be seen
+components of `Trainer`. But now I am handling it by using `pipeline_config` to
+service locate these components. I would have envisioned either:
+
+1. A main `Pipeline` function that takes in `pipeline_config` and calls the appropriate
+   components, and dispatches the appropriate arguments to each component.
+
+2. Remain as it is, but remove `Model` from `Trainer`'s constructor, and instead pass
+   the responsibility of creating `Model` to `pipeline_config` like how I am doing.
+
 ### Pipeline Pattern
 
 Compose/Pipeline example:

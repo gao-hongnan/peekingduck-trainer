@@ -8,7 +8,7 @@ from torchmetrics.classification import MulticlassCalibrationError
 
 from argparse import ArgumentParser, Namespace
 from configs.base_params import PipelineConfig
-from src.dataset import (
+from src.datamodule.dataset import (
     ImageClassificationDataModule,
     MNISTDataModule,
     RSNABreastDataModule,
