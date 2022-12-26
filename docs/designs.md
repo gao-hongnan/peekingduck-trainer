@@ -16,6 +16,10 @@ service locate these components. I would have envisioned either:
 2. Remain as it is, but remove `Model` from `Trainer`'s constructor, and instead pass
    the responsibility of creating `Model` to `pipeline_config` like how I am doing.
 
+### Composition Type Hint?
+
+See UML, whether the composition should be `AbstractPipelineConfig` or `PipelineConfig`?
+
 ### Pipeline Pattern
 
 Compose/Pipeline example:

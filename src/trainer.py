@@ -105,8 +105,9 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
         train_metrics_results = self.train_metrics(y_probs, y_trues.flatten())
         valid_metrics_results = self.valid_metrics(y_probs, y_trues.flatten())
         valid_metrics_results_df = pd.DataFrame.from_dict([valid_metrics_results])
-        print(f"valid_metrics:\n")
-        print(tabulate(valid_metrics_results_df, headers="keys", tablefmt="psql"))
+        print(
+            f'\nvalid_metrics:\n{tabulate(valid_metrics_results_df, headers="keys", tablefmt="psql")}\n'
+        )
         return train_metrics_results, valid_metrics_results
 
     def run(self):

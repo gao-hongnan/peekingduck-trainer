@@ -195,7 +195,7 @@ class ImageClassificationDataset(Dataset):
 class MNISTDataModule(CustomizedDataModule):
     """DataModule for MNIST dataset."""
 
-    def __init__(self, pipeline_config: Optional[PipelineConfig] = None) -> None:
+    def __init__(self, pipeline_config: PipelineConfig) -> None:
         super().__init__(pipeline_config)
         self.pipeline_config = pipeline_config
         self.transforms = ImageClassificationTransforms(pipeline_config)
@@ -251,7 +251,7 @@ class MNISTDataModule(CustomizedDataModule):
 class ImageClassificationDataModule(CustomizedDataModule):
     """Data module for generic image classification dataset."""
 
-    def __init__(self, pipeline_config: Optional[PipelineConfig] = None) -> None:
+    def __init__(self, pipeline_config: PipelineConfig) -> None:
         super().__init__(pipeline_config)
         self.pipeline_config = pipeline_config
         self.transforms = ImageClassificationTransforms(pipeline_config)
