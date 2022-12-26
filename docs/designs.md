@@ -53,7 +53,7 @@ of each component is consistent (i.e. `pipeline_config` is passed in and out).
 This is currently not the case, for example, `ImageClassificationDataModule`
 does not return anything...see example above. Worth exploring.
 
-
+## Transforms
 
 
 - Instead of user overriding base Transforms class, they can directly specify the transform augmentations in the config file. Yier pointed out that the current implementation makes the child class ImageClassificationTransforms moot. 

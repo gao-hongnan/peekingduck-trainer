@@ -26,6 +26,7 @@ from dataclasses import dataclass
 # print(c.contains(0, 0))
 # print(c.contains(1, 1))
 
+
 @dataclass
 class Point:
     """A Point object encapsulates a point on a 2D plane."""
@@ -53,8 +54,16 @@ class Circle:
         return math.sqrt((self.center.x - x) ** 2 + (self.center.y - y) ** 2) <= self.r
 
 
+def say(obj: callable) -> None:
+    print("Hi, I am " + str(obj))
+
+
 if __name__ == "__main__":
-    c = Circle(0, 0, 1)
-    print(c.get_area())
-    print(c.contains(0, 0))
-    print(c.contains(1, 1))
+    p = Point(0, 0)
+    c = Circle(p, 1)
+    say(p)
+    say(c)
+
+
+# inpython
+
