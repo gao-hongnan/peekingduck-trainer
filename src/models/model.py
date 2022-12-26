@@ -65,7 +65,7 @@ class ImageClassificationModel(Model):
             the penultimate layer of the backbone is taken, but different
             models will have different names for the penultimate layer.
             Maybe see my old code for reference where I check for it?
-        """ #fully connected
+        """  # fully connected
         in_features = self.backbone.fc.in_features  # fc is hardcoded
         out_features = self.pipeline_config.model.num_classes
         head = nn.Linear(in_features=in_features, out_features=out_features)
