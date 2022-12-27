@@ -15,7 +15,11 @@ is no longer creating its own dependency. It is now **injected** with the depend
 This **inverts the control** of the dependency from `CustomDataset` to the caller
 of `CustomDataset`. This is the **Dependency Inversion Principle**.
 
-More concretely, in traditional sense, since class A depends on class B, then class A is the one creating the dependency. But after applying **Dependency Inversion Principle**, class A is no longer creating the dependency. Instead, the dependency is instantiated outside of class A
+More concretely, in traditional sense, since class A depends on class B,
+then class A is the one creating the dependency.
+But after applying **Dependency Inversion Principle**,
+class A is no longer creating the dependency.
+Instead, the dependency is instantiated outside of class A
 at runtime and is injected into class A. This is the **Dependency Inversion Principle**,
 a form of **Inversion of Control**.
 

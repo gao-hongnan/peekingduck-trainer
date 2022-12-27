@@ -26,6 +26,9 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
 
     dm = ImageClassificationDataModule(pipeline_config)
     dm.prepare_data()
+    dm.setup(stage="fit")
+    train_loader = dm.train_dataloader()
+    valid_loader = dm.valid_dataloader()
 
     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
     metrics_collection = MetricCollection(
@@ -49,9 +52,6 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
         callbacks=callbacks,
     )
 
-    dm.setup(stage="fit")
-    train_loader = dm.train_dataloader()
-    valid_loader = dm.valid_dataloader()
     history = trainer.fit(train_loader, valid_loader, fold=None)
     print("Valid Loss", history["valid_loss"])
     print("Valid Acc", history["val_Accuracy"])
