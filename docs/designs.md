@@ -1,5 +1,9 @@
 # Design Patterns
 
+## Sprint 1
+
+Use controller.
+
 ## New Ideas
 
 ### Composition Mixed
