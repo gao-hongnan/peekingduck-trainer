@@ -94,18 +94,26 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
             y_preds (torch.Tensor): dtype=[torch.int64], shape=(num_samples, 1);
             y_probs (torch.Tensor): dtype=[torch.float32], shape=(num_samples, num_classes);
             mode (str, optional): [description]. Defaults to "valid".
-        Returns:
-            [type]: [description]
         """
         probablistic_f1 = pfbeta_torch(y_trues, y_preds, beta=1)
         # print("probablistic_f1", probablistic_f1)
 
         self.train_metrics = self.metrics.clone(prefix="train_")
         self.valid_metrics = self.metrics.clone(prefix="val_")
+
+        # FIXME: currently train and valid give same results, since this func call takes in
+        # y_trues, etc from valid_one_epoch.
         train_metrics_results = self.train_metrics(y_probs, y_trues.flatten())
+        train_metrics_results_df = pd.DataFrame.from_dict([train_metrics_results])
+
         valid_metrics_results = self.valid_metrics(y_probs, y_trues.flatten())
         valid_metrics_results_df = pd.DataFrame.from_dict([valid_metrics_results])
-        print(
+
+        # TODO: relinquish this logging duty to a callback or for now in train_one_epoch and valid_one_epoch.
+        self.logger.info(
+            f"\ntrain_metrics:\n{tabulate(train_metrics_results_df, headers='keys', tablefmt='psql')}\n"
+        )
+        self.logger.info(
             f'\nvalid_metrics:\n{tabulate(valid_metrics_results_df, headers="keys", tablefmt="psql")}\n'
         )
         return train_metrics_results, valid_metrics_results
@@ -373,6 +381,7 @@ class Trainer:  # pylint: disable=too-many-instance-attributes, too-many-argumen
                 "valid_logits": valid_logits,
                 "valid_preds": valid_preds,
                 "valid_probs": valid_probs,
+                "valid_elapsed_time": valid_elapsed_time,
             }
         )  # FIXME: potential difficulty in debugging since valid_epoch_dict is called in metrics meter
         self.valid_epoch_dict.update(valid_metrics_dict)

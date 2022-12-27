@@ -5,7 +5,9 @@ import importlib
 from pytorch_grad_cam import GradCAM
 from torchmetrics import AUROC, Accuracy, MetricCollection, Precision, Recall
 from torchmetrics.classification import MulticlassCalibrationError
-
+import pprint
+from tabulate import tabulate
+import pandas as pd
 from argparse import ArgumentParser, Namespace
 from configs.base_params import PipelineConfig
 from src.datamodule.dataset import (
@@ -54,7 +56,16 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
     print("Valid Loss", history["valid_loss"])
     print("Valid Acc", history["val_Accuracy"])
     print("Valid AUROC", history["val_AUROC"])
-    # print(history)
+    print(history.keys())
+    # history_df = pd.DataFrame(
+    #     {
+    #         v: [history[v]]
+    #         for k in history.keys()
+    #         if k in ["valid_loss", "val_Accuracy", "val_AUROC"]
+    #         for v in k
+    #     }
+    # )
+    # print(tabulate(history_df, headers="keys", tablefmt="psql"))
 
 
 def train_one_fold(pipeline_config: PipelineConfig, fold: int) -> None:

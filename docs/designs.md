@@ -11,10 +11,104 @@ components of `Trainer`. But now I am handling it by using `pipeline_config` to
 service locate these components. I would have envisioned either:
 
 1. A main `Pipeline` function that takes in `pipeline_config` and calls the appropriate
-   components, and dispatches the appropriate arguments to each component.
+   components, and dispatches the appropriate arguments to each component, i.e. Service Locator.
+   
+   This way, the composition of `Trainer` is intuitive.
+
+```python
+class PipelineDispatcher:
+    def __init__(self, pipeline_config: PipelineConfig) -> None:
+        self.pipeline_config = pipeline_config
+        self.model = self.pipeline_config.model
+        self.dm = self.pipeline_config.datamodule
+        self.metrics = self.pipeline_config.metrics
+        self.callbacks = self.pipeline_config.callbacks
+        self.optimizer = self.pipeline_config.optimizer
+        self.scheduler = self.pipeline_config.scheduler
+        self.criterion = self.pipeline_config.criterion
+
+    def train(self) -> None:
+        trainer = Trainer(
+            self.model,
+            self.dm,
+            self.metrics,
+            self.callbacks,
+            self.optimizer,
+            self.scheduler,
+            self.criterion,
+        )
+        trainer.fit()
+        return self  # for chaining like in scikit-learn?
+
+    def inference(self) -> None:
+        inferencer = Inferencer(self.model, self.dm, self.callbacks)
+        inferencer.inference()
+```
+
+or maybe
+
+```python
+class Trainer:
+    def __init__(
+        self,
+        model: Model,
+        dm: DataModule,
+        metrics: Metrics,
+        callbacks: Callbacks,
+        optimizer: Optimizer,
+        scheduler: Scheduler,
+        criterion: Criterion,
+    ) -> None:
+        self.model = model
+        self.dm = dm
+        self.metrics = metrics
+        self.callbacks = callbacks
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.criterion = criterion
+
+    def fit(self) -> None:
+        # do training
+        return self  # for chaining like in scikit-learn?
+
+pipeline_config = PipelineConfig()
+model = pipeline_config.model
+dm = pipeline_config.datamodule
+...
+trainer = Trainer(model, dm, ...)
+```
 
 2. Remain as it is, but remove `Model` from `Trainer`'s constructor, and instead pass
    the responsibility of creating `Model` to `pipeline_config` like how I am doing.
+
+   In other words, components such as `Trainer` should just take in one `pipeline_config`.
+
+```python
+class Trainer:
+    def __init__(self, pipeline_config: PipelineConfig) -> None:
+        self.pipeline_config = pipeline_config
+        self.model = self.pipeline_config.model
+        self.dm = self.pipeline_config.datamodule
+        self.metrics = self.pipeline_config.metrics
+        self.callbacks = self.pipeline_config.callbacks
+        self.optimizer = self.pipeline_config.optimizer
+        self.scheduler = self.pipeline_config.scheduler
+        self.criterion = self.pipeline_config.criterion
+
+    def fit(self) -> None:
+        # do training
+        return self  # for chaining like in scikit-learn?
+
+class Inferencer:
+    def __init__(self, pipeline_config: PipelineConfig) -> None:
+        self.pipeline_config = pipeline_config
+        self.model = self.pipeline_config.model
+        self.dm = self.pipeline_config.datamodule
+        self.callbacks = self.pipeline_config.callbacks
+
+    def inference(self) -> None:
+        # do inference
+```
 
 ### Composition Type Hint?
 
