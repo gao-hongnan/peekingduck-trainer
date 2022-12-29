@@ -237,7 +237,7 @@ class CriterionParams:
     #         "label_smoothing": 0.3,
     #     }
     # )
-    train_criterions: Dict[str, Any] = field(
+    train_criterion_params: Dict[str, Any] = field(
         default_factory=lambda: {
             "weight": torch.tensor([1, 10]).cuda().float()
             if torch.cuda.is_available()
@@ -268,7 +268,7 @@ class OptimizerParams:
     """A class to track optimizer parameters."""
 
     # batch size increase 2, lr increases a factor of 2 as well.
-    optimizer_name: str = "AdamW"
+    optimizer: str = "AdamW"
     optimizer_params: Dict[str, Any] = field(
         default_factory=lambda: {
             "lr": 1e-4 / 2,  # 32 -> 16 so lr/2
@@ -285,7 +285,7 @@ class OptimizerParams:
 class SchedulerParams:
     """A class to track Scheduler Params."""
 
-    scheduler_name: str = "CosineAnnealingWarmRestarts"  # Debug
+    scheduler: str = "CosineAnnealingWarmRestarts"  # Debug
     scheduler_params: Dict[str, Any] = field(
         default_factory=lambda: {
             "T_0": 10,
