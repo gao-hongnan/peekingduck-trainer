@@ -184,7 +184,7 @@ class AugmentationParams:
 class ModelParams:
     """Class to keep track of the model parameters."""
 
-    adaptor: str = "timm"
+    adapter: str = "timm"
     model_name: str = "seresnext50_32x4d"
     pretrained: bool = True
     num_classes: int = 2
