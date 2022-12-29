@@ -1,4 +1,5 @@
 """Base class for params class. Similar to AbstractNode and Node."""
+from __future__ import annotations
 import pprint
 import sys
 from abc import ABC, abstractmethod
