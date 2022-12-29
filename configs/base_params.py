@@ -1,11 +1,15 @@
 """Base class for params class. Similar to AbstractNode and Node."""
-from __future__ import annotations
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
 import pprint
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import albumentations as A
 import torch
