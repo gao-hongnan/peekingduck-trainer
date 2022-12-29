@@ -56,8 +56,8 @@ class Data:
     def __post_init__(self) -> None:
         """Post init method for dataclass."""
         self.data_dir = Path(config.DATA_DIR) / "rsna_breast_cancer_detection"
-        self.train_dir = self.data_dir / "train"
-        self.train_csv = self.train_dir / "train.csv"
+        self.train_dir = "/kaggle/input/rsna-breast-cancer-512-pngs"
+        self.train_csv = "/kaggle/input/rsna-breast-cancer-detection/train.csv"
         self.test_dir = self.data_dir / "test"
         self.test_csv = self.test_dir / "test.csv"
         self.class_id_to_name = {v: k for k, v in self.class_name_to_id.items()}
@@ -239,7 +239,9 @@ class CriterionParams:
     # )
     train_criterions: Dict[str, Any] = field(
         default_factory=lambda: {
-            "weight": torch.tensor([1, 10]).cuda().float(),
+            "weight": torch.tensor([1, 10]).cuda().float()
+            if torch.cuda.is_available()
+            else torch.tensor([1, 10]).float(),
             "size_average": None,
             "ignore_index": -100,
             "reduce": None,
@@ -249,7 +251,9 @@ class CriterionParams:
     )
     valid_criterion_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "weight": torch.tensor([1, 10]).cuda().float(),
+            "weight": torch.tensor([1, 10]).cuda().float()
+            if torch.cuda.is_available()
+            else torch.tensor([1, 10]).float(),
             "size_average": None,
             "ignore_index": -100,
             "reduce": None,
@@ -304,9 +308,9 @@ class GlobalTrainParams:
 
     debug: bool = False
     debug_multiplier: int = 128
-    epochs: int = 10  # 10 when not debug
+    epochs: int = 1  # 10 when not debug
     use_amp: bool = True
-    patience: int = 10
+    patience: int = 100
     classification_type: str = "multiclass"
     monitored_metric: Dict[str, Any] = field(
         default_factory=lambda: {
@@ -325,7 +329,7 @@ class CallbackParams:
             History(),
             MetricMeter(),
             ModelCheckpoint(mode="max", monitor="val_AUROC"),
-            EarlyStopping(mode="max", monitor="val_AUROC", patience=10),
+            EarlyStopping(mode="max", monitor="val_AUROC", patience=100),
         ]
     )
 
