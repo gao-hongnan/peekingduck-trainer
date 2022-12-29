@@ -55,8 +55,8 @@ class Data:
 
     def __post_init__(self) -> None:
         """Post init method for dataclass."""
-        self.data_dir = "/kaggle/input/rsna-breast-cancer-detection"
-        self.train_dir = "/kaggle/input/rsna-breast-cancer-512-pngs"
+        self.data_dir = Path("/kaggle/input/rsna-breast-cancer-detection")
+        self.train_dir = Path("/kaggle/input/rsna-breast-cancer-512-pngs")
         self.train_csv = "/kaggle/input/rsna-breast-cancer-detection/train.csv"
         self.test_dir = self.data_dir / "test"
         self.test_csv = self.test_dir / "test.csv"
