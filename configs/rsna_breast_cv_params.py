@@ -58,8 +58,8 @@ class Data:
         self.data_dir = Path(config.DATA_DIR)  # / "rsna_breast_cancer"
         self.train_dir = Path("/kaggle/input/rsna-breast-cancer-512-pngs")
         self.train_csv = "/kaggle/input/rsna-breast-cancer-detection/train.csv"
-        self.test_dir = self.data_dir / "test"
-        self.test_csv = self.test_dir / "test.csv"
+        self.test_dir = Path("/kaggle/input/rsna-breast-cancer-detection/test_images")
+        self.test_csv = Path("/kaggle/input/rsna-breast-cancer-detection/test.csv")
         self.class_id_to_name = {v: k for k, v in self.class_name_to_id.items()}
 
     @property
