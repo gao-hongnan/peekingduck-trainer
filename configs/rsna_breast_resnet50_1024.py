@@ -309,7 +309,7 @@ class GlobalTrainParams:
 
     debug: bool = False
     debug_multiplier: int = 128
-    epochs: int = 6  # 10 when not debug
+    epochs: int = 4  # 10 when not debug
     use_amp: bool = True
     patience: int = 100
     classification_type: str = "multiclass"
