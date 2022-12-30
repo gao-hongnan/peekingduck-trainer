@@ -16,7 +16,7 @@ from configs.base_params import PipelineConfig
 from src.models.base import Model
 from src.utils.general_utils import seed_all
 
-
+# TODO: Follow timm's creation of head and backbone
 class ImageClassificationModel(Model):
     """A generic image classification model. This is generic in the sense that
     it can be used for any image classification by just modifying the head.
@@ -65,8 +65,9 @@ class ImageClassificationModel(Model):
             the penultimate layer of the backbone is taken, but different
             models will have different names for the penultimate layer.
             Maybe see my old code for reference where I check for it?
-        """  # fully connected
-        in_features = self.backbone.fc.in_features  # fc is hardcoded
+        """
+        # fully connected
+        in_features = self.backbone.fc.in_features  # FIXME: fc is hardcoded
         out_features = self.pipeline_config.model.num_classes
         head = nn.Linear(in_features=in_features, out_features=out_features)
         return head
