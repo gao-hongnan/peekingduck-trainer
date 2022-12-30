@@ -92,3 +92,41 @@ class ImageClassificationModel(Model):
         y = self.model(inputs)
         print(f"X: {inputs.shape}, Y: {y.shape}")
         print("Forward Pass Successful")
+
+
+class MNISTModel(Model):
+    """MNIST Model."""
+
+    def __init__(self, pipeline_config: PipelineConfig) -> None:
+        super().__init__(pipeline_config)
+        self.pipeline_config = pipeline_config
+        self.create_model()
+
+    def create_model(self) -> MNISTModel:
+        self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
+        self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
+        self.conv2_drop = nn.Dropout2d(p=self.pipeline_config.model.dropout)
+        self.fc1 = nn.Linear(320, 50)
+        self.fc2 = nn.Linear(50, self.pipeline_config.model.num_classes)
+        return self
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        inputs = F.relu(F.max_pool2d(self.conv1(inputs), 2))
+        inputs = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(inputs)), 2))
+        inputs = inputs.view(-1, 320)
+        inputs = F.relu(self.fc1(inputs))
+        inputs = F.dropout(inputs, training=self.training)
+        inputs = self.fc2(inputs)
+        return inputs
+
+
+# if __name__ == "__main__":
+#     seed_all(42)
+
+#     pipeline_config = Cifar10PipelineConfig()
+
+#     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+#     print(model.model_summary(device=pipeline_config.device))
+
+#     inputs = torch.randn(1, 3, 224, 224).to(pipeline_config.device)
+#     model.forward_pass(inputs)
