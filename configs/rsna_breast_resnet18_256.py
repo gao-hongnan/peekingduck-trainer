@@ -209,10 +209,7 @@ class Stores:
         self.logs_dir.mkdir(parents=True, exist_ok=True)
 
         self.model_artifacts_dir = (
-            Path(config.MODEL_ARTIFACTS)
-            / "artifacts"
-            / self.project_name
-            / self.unique_id
+            Path("/kaggle/working") / "artifacts" / self.project_name / self.unique_id
         )
         self.model_artifacts_dir.mkdir(parents=True, exist_ok=True)
 
