@@ -1,4 +1,4 @@
-"""Model Interface that follows the Strategy Pattern."""
+"""Model Interface that follows the Strategy/Template Pattern."""
 from __future__ import annotations
 
 import functools
@@ -75,15 +75,20 @@ class Model(ABC, nn.Module):
         return torchinfo.summary(self.model, input_size=input_size, **kwargs)
 
     def get_last_layer(self) -> Tuple[list, int, nn.Module]:
-        """Get the last layer information of TIMM Model."""
-        last_layer_name = None
-        for name, _param in self.model.named_modules():
+        """Get the last layer information of a PyTorch Model.
+
+        NOTE:
+            This is only correct if the last layer is a linear layer and is the head.
+            The easy way for timm is actually to use the `reset_classifier` method to
+            remove the head and then add a new head.
+        """
+        # propagate through the model to get the last layer name
+        for name, _param in self.backbone.named_modules():
             last_layer_name = name
 
         last_layer_attributes = last_layer_name.split(".")  # + ['in_features']
-        linear_layer = functools.reduce(getattr, last_layer_attributes, self.model)
-        # reduce applies to a list recursively and reduce
-        in_features = functools.reduce(
-            getattr, last_layer_attributes, self.model
-        ).in_features
-        return last_layer_attributes, in_features, linear_layer
+        # reduce applies to a list recursively and reduce it to a single value
+        linear_layer = functools.reduce(getattr, last_layer_attributes, self.backbone)
+        in_features = linear_layer.in_features
+        last_layer_name = ".".join(last_layer_attributes)
+        return last_layer_name, linear_layer, in_features

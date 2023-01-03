@@ -1,3 +1,4 @@
+import functools
 import gc
 import inspect
 import logging
@@ -17,6 +18,19 @@ import requests
 import torch
 import torchvision.transforms.functional as F
 from tqdm import tqdm
+
+
+## set and get attribute dynamically
+def rsetattr(obj, attr, val):
+    pre, _, post = attr.rpartition(".")
+    return setattr(rgetattr(obj, pre) if pre else obj, post, val)
+
+
+def rgetattr(obj, attr, *args):
+    def _getattr(obj, attr):
+        return getattr(obj, attr, *args)
+
+    return functools.reduce(_getattr, [obj] + attr.split("."))
 
 
 class State(dict):
