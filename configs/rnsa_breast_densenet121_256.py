@@ -218,48 +218,24 @@ class CriterionParams:
 
     train_criterion: str = "CrossEntropyLoss"
     valid_criterion: str = "CrossEntropyLoss"
-    # train_criterion_params: Dict[str, Any] = field(
-    #     default_factory=lambda: {
-    #         "weight": torch.tensor([1, 10]).cuda().float(),
-    #         "size_average": None,
-    #         "ignore_index": -100,
-    #         "reduce": None,
-    #         "reduction": "mean",
-    #         "label_smoothing": 0.3,
-    #     }
-    # )
-    # valid_criterion_params: Dict[str, Any] = field(
-    #     default_factory=lambda: {
-    #         "weight": torch.tensor([1, 10]).cuda().float(),
-    #         "size_average": None,
-    #         "ignore_index": -100,
-    #         "reduce": None,
-    #         "reduction": "mean",
-    #         "label_smoothing": 0.3,
-    #     }
-    # )
     train_criterion_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "weight": torch.tensor([1, 20]).cuda().float()
-            if torch.cuda.is_available()
-            else torch.tensor([1, 20]).float(),
+            "weight": None,
             "size_average": None,
             "ignore_index": -100,
             "reduce": None,
             "reduction": "mean",
-            "label_smoothing": 0.1,
+            "label_smoothing": 0.0,
         }
     )
     valid_criterion_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "weight": torch.tensor([1, 20]).cuda().float()
-            if torch.cuda.is_available()
-            else torch.tensor([1, 20]).float(),
+            "weight": None,
             "size_average": None,
             "ignore_index": -100,
             "reduce": None,
             "reduction": "mean",
-            "label_smoothing": 0.1,
+            "label_smoothing": 0.0,
         }
     )
 
@@ -272,7 +248,7 @@ class OptimizerParams:
     optimizer: str = "AdamW"
     optimizer_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "lr": 1e-4 / 4,  # 32 -> 16 so lr/2
+            "lr": 1e-4,  # 32 -> 1e-4
             "betas": (0.9, 0.999),
             "amsgrad": False,
             "weight_decay": 1e-6,
