@@ -186,7 +186,7 @@ class ModelParams:
     """Class to keep track of the model parameters."""
 
     adapter: str = "timm"
-    model_name: str = "densenet121"
+    model_name: str = "resnet18"
     pretrained: bool = True
     num_classes: int = 2
     # dropout: float = 0.3  # 0.5

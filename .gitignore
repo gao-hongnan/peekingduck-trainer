@@ -148,3 +148,5 @@ castings_data
 logs
 
 wandb/
+
+outputs/
