@@ -186,7 +186,7 @@ class ModelParams:
     """Class to keep track of the model parameters."""
 
     adapter: str = "timm"
-    model_name: str = "resnet18"
+    model_name: str = "resnet50"
     pretrained: bool = True
     num_classes: int = 2
     # dropout: float = 0.3  # 0.5
@@ -250,7 +250,7 @@ class OptimizerParams:
     optimizer: str = "AdamW"
     optimizer_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "lr": 1e-4,  # 32 -> 1e-4
+            "lr": 3e-4,  # 32 -> 1e-4
             "betas": (0.9, 0.999),
             "amsgrad": False,
             "weight_decay": 1e-6,
@@ -287,7 +287,7 @@ class GlobalTrainParams:
 
     debug: bool = False
     debug_multiplier: int = 128
-    epochs: int = 4  # 10 when not debug
+    epochs: int = 10  # 10 when not debug
     use_amp: bool = True
     patience: int = 100
     classification_type: str = "multiclass"
