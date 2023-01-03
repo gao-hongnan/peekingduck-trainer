@@ -29,10 +29,6 @@ class ImageClassificationModel(Model):
         self.adapter = self.pipeline_config.model.adapter
         self.model_name = self.pipeline_config.model.model_name
         self.pretrained = self.pipeline_config.model.pretrained
-        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
-
-        # self.backbone = self.load_backbone()
-        # self.head = self.modify_head()
         self.model = self.create_model()
 
         # self.model.apply(self._init_weights) # activate if init weights
@@ -50,7 +46,7 @@ class ImageClassificationModel(Model):
         self.backbone = self.load_backbone()
         last_layer_name, _, in_features = self.get_last_layer()
         rsetattr(self.backbone, last_layer_name, nn.Identity())
-        self.head = self.modify_head(last_layer_name, in_features)
+        self.head = self.modify_head(in_features)
         model = self._concat_backbone_and_head(last_layer_name)
         return model
 
@@ -73,12 +69,9 @@ class ImageClassificationModel(Model):
             )
         else:
             raise ValueError(f"Adapter {self.adapter} not supported.")
-        print(backbone)
         return backbone
 
-    def modify_head(
-        self, last_layer_name: str = None, in_features: int = None
-    ) -> nn.Module:
+    def modify_head(self, in_features: int = None) -> nn.Module:
         """Modify the head of the model.
 
         NOTE/TODO:
@@ -96,16 +89,12 @@ class ImageClassificationModel(Model):
         feature embeddings.
         """
         features = self.backbone(inputs)
-        print(self.backbone)
-        print(f"X: {inputs.shape}, Features: {features.shape}")
         return features
 
     def forward_head(self, inputs: torch.Tensor) -> torch.Tensor:
         """Forward pass of the model up to the head to get predictions."""
-        # inputs = self.global_avg_pool(inputs)
-        # print(f"X: {inputs.shape}")
+        # nn.AdaptiveAvgPool2d(1)(inputs) is used by both timm and torchvision
         outputs = self.head(inputs)
-        print(f"X: {inputs.shape}, Outputs: {outputs.shape}")
         return outputs
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
