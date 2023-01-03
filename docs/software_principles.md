@@ -167,3 +167,7 @@ class Car(MotorVehicle):
     def run(self) -> None:
         print("Wrroooooooom, let's roll baby!")
 ```
+
+
+## SOLID
+

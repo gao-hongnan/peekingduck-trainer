@@ -6,6 +6,7 @@ import sys
 
 sys.path.insert(1, os.getcwd())
 
+import copy
 import timm
 import torch
 import torch.nn.functional as F
@@ -14,7 +15,7 @@ from torch import nn
 
 from configs.base_params import PipelineConfig
 from src.models.base import Model
-from src.utils.general_utils import seed_all
+from src.utils.general_utils import seed_all, rsetattr
 
 # TODO: Follow timm's creation of head and backbone
 class ImageClassificationModel(Model):
@@ -26,17 +27,32 @@ class ImageClassificationModel(Model):
         super().__init__(pipeline_config)
 
         self.adapter = self.pipeline_config.model.adapter
-        self.backbone = self.load_backbone()
-        self.head = self.modify_head()
+        self.model_name = self.pipeline_config.model.model_name
+        self.pretrained = self.pipeline_config.model.pretrained
+        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
+
+        # self.backbone = self.load_backbone()
+        # self.head = self.modify_head()
         self.model = self.create_model()
 
         # self.model.apply(self._init_weights) # activate if init weights
         print(f"Successfully created model: {self.pipeline_config.model.model_name}")
 
+    def _concat_backbone_and_head(self, last_layer_name) -> nn.Module:
+        """Concatenate the backbone and head of the model."""
+        model = copy.deepcopy(self.backbone)
+        head = copy.deepcopy(self.head)
+        rsetattr(model, last_layer_name, head)
+        return model
+
     def create_model(self) -> nn.Module:
-        """Create the model."""
-        self.backbone.fc = self.head
-        return self.backbone
+        """Create the model sequentially."""
+        self.backbone = self.load_backbone()
+        last_layer_name, _, in_features = self.get_last_layer()
+        rsetattr(self.backbone, last_layer_name, nn.Identity())
+        self.head = self.modify_head(last_layer_name, in_features)
+        model = self._concat_backbone_and_head(last_layer_name)
+        return model
 
     def load_backbone(self) -> nn.Module:
         """Load the backbone of the model.
@@ -46,34 +62,58 @@ class ImageClassificationModel(Model):
             2. This is not mandatory since users can just create it in create_model.
         """
         if self.adapter == "torchvision":
-            backbone = getattr(
-                torchvision.models, self.pipeline_config.model.model_name
-            )(pretrained=self.pipeline_config.model.pretrained)
+            backbone = getattr(torchvision.models, self.model_name)(
+                pretrained=self.pretrained
+            )
         elif self.adapter == "timm":
             backbone = timm.create_model(
-                self.pipeline_config.model.model_name,
-                pretrained=self.pipeline_config.model.pretrained,
-                # in_chans=3,
+                self.model_name,
+                pretrained=self.pretrained,
+                # in_chans=3
             )
+        else:
+            raise ValueError(f"Adapter {self.adapter} not supported.")
+        print(backbone)
         return backbone
 
-    def modify_head(self) -> nn.Module:
+    def modify_head(
+        self, last_layer_name: str = None, in_features: int = None
+    ) -> nn.Module:
         """Modify the head of the model.
 
         NOTE/TODO:
             This part is very tricky, to modify the head,
             the penultimate layer of the backbone is taken, but different
             models will have different names for the penultimate layer.
-            Maybe see my old code for reference where I check for it?
         """
         # fully connected
-        in_features = self.backbone.fc.in_features  # FIXME: fc is hardcoded
         out_features = self.pipeline_config.model.num_classes
         head = nn.Linear(in_features=in_features, out_features=out_features)
         return head
 
+    def forward_features(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the model up to the penultimate layer to get
+        feature embeddings.
+        """
+        features = self.backbone(inputs)
+        print(self.backbone)
+        print(f"X: {inputs.shape}, Features: {features.shape}")
+        return features
+
+    def forward_head(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the model up to the head to get predictions."""
+        # inputs = self.global_avg_pool(inputs)
+        # print(f"X: {inputs.shape}")
+        outputs = self.head(inputs)
+        print(f"X: {inputs.shape}, Outputs: {outputs.shape}")
+        return outputs
+
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        return self.model(inputs)
+        """Forward pass of the model."""
+        features = self.forward_features(inputs)
+        outputs = self.forward_head(features)
+        return outputs
+        # return self.model(inputs)
 
     def _init_weights(self, module: nn.Module) -> None:
         """Initialize the weights of the model."""

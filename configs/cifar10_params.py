@@ -175,8 +175,8 @@ class AugmentationParams(TransformConfig):
 class ModelParams(ModelConfig):
     """Class to keep track of the model parameters."""
 
-    adapter: str = "torchvision"
-    model_name: str = "resnet18"
+    adapter: str = "torchvision"  # "torchvision" "timm"
+    model_name: str = "resnet18"  # resnet18 "tf_efficientnetv2_s"
     pretrained: bool = True
     num_classes: int = 10  # 2
     dropout: float = 0.3  # 0.5
