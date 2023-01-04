@@ -304,7 +304,7 @@ class ImageClassificationDataModule(CustomizedDataModule):
             train_df = df[df.fold != fold].reset_index(drop=True)
             valid_df = df[df.fold == fold].reset_index(drop=True)
             print("fold", fold, "train", train_df.shape, "valid", valid_df.shape)
-
+            self.oof_df = df.copy()
         return train_df, valid_df
 
     def prepare_data(self, fold: Optional[int] = None) -> None:
@@ -355,13 +355,12 @@ class ImageClassificationDataModule(CustomizedDataModule):
             )
 
         self.train_df, self.valid_df = self.cross_validation_split(df, fold)
-        self.oof_df = self.valid_df.copy()
+
         if self.pipeline_config.datamodule.debug:
             num_debug_samples = self.pipeline_config.datamodule.num_debug_samples
             print(f"Debug mode is on, using {num_debug_samples} images for training.")
             self.train_df = self.train_df.sample(num_debug_samples)
             self.valid_df = self.valid_df.sample(num_debug_samples)
-            self.oof_df = self.valid_df.copy()
 
     def setup(self, stage: str) -> None:
         """Assign train/val datasets for use in dataloaders."""
@@ -455,10 +454,11 @@ class RSNABreastDataModule(CustomizedDataModule):
             print(
                 df.groupby(["fold", self.pipeline_config.data.target_col_name]).size()
             )
+
             train_df = df[df.fold != fold].reset_index(drop=True)
             valid_df = df[df.fold == fold].reset_index(drop=True)
             print("fold", fold, "train", train_df.shape, "valid", valid_df.shape)
-
+            self.oof_df = df.copy()
         return train_df, valid_df
 
     def prepare_data(self, fold: Optional[int] = None) -> None:

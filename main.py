@@ -104,9 +104,9 @@ def create_oof_df(pipeline_config: PipelineConfig) -> None:
 
     df_oof = dm.oof_df
 
-    model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
-
-    weight = "/Users/reighns/gaohn/peekingduck-trainer/stores/model_artifacts/CIFAR-10/74502c5e-d25e-48c2-8b86-a690d33372f8/resnet18_best_val_Accuracy_fold_None_epoch9.pt"
+    weights = [
+        "/Users/reighns/gaohn/peekingduck-trainer/stores/model_artifacts/CIFAR-10/74502c5e-d25e-48c2-8b86-a690d33372f8/resnet18_best_val_Accuracy_fold_None_epoch9.pt"
+    ]
 
     oof_probs = torch.load(weight)["oof_probs"]
     oof_trues = torch.load(weight)["oof_trues"]
