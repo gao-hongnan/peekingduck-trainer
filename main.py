@@ -276,7 +276,9 @@ def run(opt: Namespace) -> None:
     if config_name == "mnist_params":
         train_mnist(pipeline_config)
     elif "rsna_breast" in config_name:
-        train_one_fold_rsna(pipeline_config, fold=1)
+        train_one_fold_rsna(pipeline_config, fold=2)
+        train_one_fold_rsna(pipeline_config, fold=3)
+
     elif "_cv_" in config_name:
         train_one_fold(pipeline_config, fold=1)
     else:
