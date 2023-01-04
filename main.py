@@ -8,6 +8,7 @@ from torchmetrics.classification import MulticlassCalibrationError
 import pprint
 from tabulate import tabulate
 import pandas as pd
+import torch
 from argparse import ArgumentParser, Namespace
 from configs.base_params import PipelineConfig
 from src.datamodule.dataset import (
@@ -18,10 +19,12 @@ from src.datamodule.dataset import (
 from src.models.model import ImageClassificationModel, MNISTModel
 from src.trainer import Trainer
 from src.utils.general_utils import seed_all, free_gpu_memory
+from src.inference import inference_all_folds, inference_one_fold
 
 
 def train_generic(pipeline_config: PipelineConfig) -> None:
     """Train on Generic Image Dataset with Train-Valid-Test Split."""
+    artifacts_dir = pipeline_config.stores.model_artifacts_dir
     num_classes = pipeline_config.model.num_classes
 
     dm = ImageClassificationDataModule(pipeline_config)
@@ -66,6 +69,58 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
     #     }
     # )
     # print(tabulate(history_df, headers="keys", tablefmt="psql"))
+
+
+def inference_generic(pipeline_config: PipelineConfig) -> None:
+    dm = ImageClassificationDataModule(pipeline_config)
+    dm.prepare_data()
+    dm.setup(stage="test")
+    test_loader = dm.test_dataloader()
+    model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+
+    weight = "/Users/reighns/gaohn/peekingduck-trainer/stores/model_artifacts/CIFAR-10/74502c5e-d25e-48c2-8b86-a690d33372f8/resnet18_best_val_Accuracy_fold_None_epoch9.pt"
+
+    state_dict = torch.load(weight)["model_state_dict"]
+    predictions = inference_one_fold(
+        model=model,
+        state_dict=state_dict,
+        test_loader=test_loader,
+        pipeline_config=pipeline_config,
+    )
+    print(predictions)
+
+
+# FIXME: find out if checkpoint is indeed saving the best epoch and not the last epoch
+# FIXME: history object's valid_probs return list of 10 instead but in the checkpoint it is 1
+# FIXME: rename oof_... to valid_... in the checkpoint
+# FIXME: OOF should be for all folds, not just one fold
+def create_oof_df(pipeline_config: PipelineConfig) -> None:
+    """Create OOF dataframe for Generic Image Dataset with a Resampling Strategy."""
+    num_classes = pipeline_config.model.num_classes
+
+    dm = ImageClassificationDataModule(pipeline_config)
+    dm.prepare_data()
+    dm.setup(stage="fit")
+
+    df_oof = dm.oof_df
+
+    model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+
+    weight = "/Users/reighns/gaohn/peekingduck-trainer/stores/model_artifacts/CIFAR-10/74502c5e-d25e-48c2-8b86-a690d33372f8/resnet18_best_val_Accuracy_fold_None_epoch9.pt"
+
+    oof_probs = torch.load(weight)["oof_probs"]
+    oof_trues = torch.load(weight)["oof_trues"]
+    oof_preds = torch.load(weight)["oof_preds"]
+
+    df_oof[[f"class_{str(c)}_oof" for c in range(num_classes)]] = (
+        oof_probs.detach().cpu().numpy()
+    )
+    df_oof["oof_trues"] = oof_trues.detach().cpu().numpy()
+    df_oof["oof_preds"] = oof_preds.detach().cpu().numpy()
+    print(df_oof.head())
+
+    accuracy = Accuracy(num_classes=num_classes)(oof_preds, oof_trues)
+    print("OOF Accuracy", accuracy)  # 0.3281 confirms that it is the best epoch
 
 
 def train_one_fold(pipeline_config: PipelineConfig, fold: int) -> None:
@@ -225,7 +280,9 @@ def run(opt: Namespace) -> None:
     elif "_cv_" in config_name:
         train_one_fold(pipeline_config, fold=1)
     else:
-        train_generic(pipeline_config)
+        # train_generic(pipeline_config)
+        # inference_generic(pipeline_config)
+        create_oof_df(pipeline_config)
 
 
 if __name__ == "__main__":

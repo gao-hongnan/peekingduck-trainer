@@ -105,7 +105,16 @@ class DataModuleParams(DataModuleConfig):
     debug: bool = True  # TODO: how to pass debug in argparse to here?
     num_debug_samples: int = 128
 
-    test_loader: Optional[Dict[str, Any]] = None
+    test_loader: Optional[Dict[str, Any]] = field(
+        default_factory=lambda: {
+            "batch_size": 32,
+            "num_workers": 0,
+            "pin_memory": True,
+            "drop_last": False,
+            "shuffle": False,
+            "collate_fn": None,
+        }
+    )
 
     train_loader: Dict[str, Any] = field(
         default_factory=lambda: {
@@ -145,6 +154,7 @@ class AugmentationParams(TransformConfig):
     mixup: bool = False
     mixup_params: Optional[Dict[str, Any]] = None
 
+    # TODO: give warning since it defaults to None if not keyed in?
     train_transforms: Optional[T.Compose] = field(init=False, default=None)
     valid_transforms: Optional[T.Compose] = field(init=False, default=None)
     test_transforms: Optional[T.Compose] = field(init=False, default=None)
@@ -162,6 +172,15 @@ class AugmentationParams(TransformConfig):
             ]
         )
         self.valid_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.Resize(self.image_size),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+
+        self.test_transforms = T.Compose(
             [
                 T.ToPILImage(),
                 T.Resize(self.image_size),
