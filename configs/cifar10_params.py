@@ -154,6 +154,7 @@ class AugmentationParams(TransformConfig):
     mixup: bool = False
     mixup_params: Optional[Dict[str, Any]] = None
 
+    # TODO: give warning since it defaults to None if not keyed in?
     train_transforms: Optional[T.Compose] = field(init=False, default=None)
     valid_transforms: Optional[T.Compose] = field(init=False, default=None)
     test_transforms: Optional[T.Compose] = field(init=False, default=None)
@@ -171,6 +172,15 @@ class AugmentationParams(TransformConfig):
             ]
         )
         self.valid_transforms = T.Compose(
+            [
+                T.ToPILImage(),
+                T.Resize(self.image_size),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+
+        self.test_transforms = T.Compose(
             [
                 T.ToPILImage(),
                 T.Resize(self.image_size),
