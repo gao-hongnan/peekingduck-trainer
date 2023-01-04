@@ -345,6 +345,15 @@ class ImageClassificationDataModule(CustomizedDataModule):
             )
         print(df.head())
 
+        if Path(self.pipeline_config.data.test_csv).exists():
+            self.test_df = pd.read_csv(self.pipeline_config.data.test_csv)
+        else:
+            self.test_df = create_dataframe_with_image_info(
+                test_images,
+                self.pipeline_config.data.class_name_to_id,
+                save_path=self.pipeline_config.data.test_csv,
+            )
+
         self.train_df, self.valid_df = self.cross_validation_split(df, fold)
         if self.pipeline_config.datamodule.debug:
             num_debug_samples = self.pipeline_config.datamodule.num_debug_samples
@@ -372,7 +381,12 @@ class ImageClassificationDataModule(CustomizedDataModule):
             )
 
         if stage == "test":
-            raise NotImplementedError
+            self.test_dataset = ImageClassificationDataset(
+                self.pipeline_config,
+                df=self.test_df,
+                stage="test",
+                transforms=self.transforms.test_transforms,
+            )
 
     def train_dataloader(self) -> DataLoader:
         """Train dataloader."""
@@ -384,6 +398,11 @@ class ImageClassificationDataModule(CustomizedDataModule):
     def valid_dataloader(self) -> DataLoader:
         return DataLoader(
             self.valid_dataset, **self.pipeline_config.datamodule.valid_loader
+        )
+
+    def test_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.test_dataset, **self.pipeline_config.datamodule.test_loader
         )
 
 

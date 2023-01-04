@@ -10,8 +10,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from tqdm.auto import tqdm
-
-from src.model import Model
+from src.models.model import Model
 from src.trainer import get_sigmoid_softmax
 from configs.base_params import PipelineConfig
 
@@ -24,9 +23,12 @@ def inference_all_folds(
     pipeline_config: PipelineConfig,
 ) -> np.ndarray:
     """Inference the model on all K folds.
+
     Args:
-        model (Model): The model to be used for inference. Note that pretrained should be set to False.
-        state_dicts (List[collections.OrderedDict]): The state dicts of the models. Generally, K Fold means K state dicts.
+        model (Model): The model to be used for inference.
+            Note that pretrained should be set to False.
+        state_dicts (List[collections.OrderedDict]): The state dicts of the models.
+            Generally, K Fold means K state dicts.
         test_loader (DataLoader): The dataloader for the test set.
 
     Returns:

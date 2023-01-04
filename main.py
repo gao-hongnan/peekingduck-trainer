@@ -8,6 +8,7 @@ from torchmetrics.classification import MulticlassCalibrationError
 import pprint
 from tabulate import tabulate
 import pandas as pd
+import torch
 from argparse import ArgumentParser, Namespace
 from configs.base_params import PipelineConfig
 from src.datamodule.dataset import (
@@ -18,6 +19,7 @@ from src.datamodule.dataset import (
 from src.models.model import ImageClassificationModel, MNISTModel
 from src.trainer import Trainer
 from src.utils.general_utils import seed_all, free_gpu_memory
+from src.inference import inference_all_folds
 
 
 def train_generic(pipeline_config: PipelineConfig) -> None:
@@ -66,6 +68,26 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
     #     }
     # )
     # print(tabulate(history_df, headers="keys", tablefmt="psql"))
+
+
+def inference_generic(pipeline_config: PipelineConfig) -> None:
+    dm = ImageClassificationDataModule(pipeline_config)
+    dm.prepare_data()
+    dm.setup(stage="test")
+    test_loader = dm.test_dataloader()
+    model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+
+    weights = [
+        "/Users/reighns/gaohn/peekingduck-trainer/stores/model_artifacts/CIFAR-10/74502c5e-d25e-48c2-8b86-a690d33372f8/resnet18_best_val_Accuracy_fold_None_epoch9.pt"
+    ]
+    state_dicts = [torch.load(path)["model_state_dict"] for path in weights]
+    predictions = inference_all_folds(
+        model=model,
+        state_dicts=state_dicts,
+        test_loader=test_loader,
+        pipeline_config=pipeline_config,
+    )
+    print(predictions)
 
 
 def train_one_fold(pipeline_config: PipelineConfig, fold: int) -> None:
@@ -226,6 +248,7 @@ def run(opt: Namespace) -> None:
         train_one_fold(pipeline_config, fold=1)
     else:
         train_generic(pipeline_config)
+        inference_generic(pipeline_config)
 
 
 if __name__ == "__main__":
