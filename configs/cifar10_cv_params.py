@@ -49,7 +49,7 @@ class Data:
     target_col_name: str = "class_id"
     group_by: Optional[str] = None
     stratify_by: Optional[str] = "class_id"
-    image_extension: str = ".png"
+    image_extension: str = "png"
     class_name_to_id: Optional[Dict[str, int]] = field(
         default_factory=lambda: {
             "airplane": 0,

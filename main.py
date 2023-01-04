@@ -280,8 +280,8 @@ def run(opt: Namespace) -> None:
     elif "_cv_" in config_name:
         train_one_fold(pipeline_config, fold=1)
     else:
-        # train_generic(pipeline_config)
-        # inference_generic(pipeline_config)
+        train_generic(pipeline_config)
+        inference_generic(pipeline_config)
         create_oof_df(pipeline_config)
 
 class Controller:

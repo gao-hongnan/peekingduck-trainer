@@ -279,7 +279,7 @@ def free_gpu_memory(
 def return_filepath(
     image_id: str,
     folder: Path,
-    extension: str = ".jpg",
+    extension: str = "jpg",
 ) -> str:
     """Add a new column image_path to the train and test csv.
 
@@ -290,12 +290,12 @@ def return_filepath(
     Args:
         image_id (str): The unique image id: 1000015157.jpg
         folder (Path): The data folder.
-        extension (str): The extension of the image. Defaults to ".jpg".
+        extension (str): The extension of the image. Defaults to "jpg".
 
     Returns:
         image_path (str): The path to the image.
     """
-    image_path = Path.joinpath(folder, f"{image_id}{extension}").as_posix()
+    image_path = Path.joinpath(folder, f"{image_id}.{extension}").as_posix()
     return image_path
 
 
