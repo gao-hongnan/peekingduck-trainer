@@ -557,7 +557,9 @@ class RSNABreastDataModule(CustomizedDataModule):
         )
 
     def test_dataloader(self) -> DataLoader:
-        pass
+        return DataLoader(
+            self.test_dataset, **self.pipeline_config.datamodule.test_loader
+        )
 
 
 if __name__ == "__main__":
