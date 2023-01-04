@@ -10,10 +10,44 @@ import torch
 from torch.utils.data import DataLoader
 
 from tqdm.auto import tqdm
-
-from src.model import Model
+from src.models.model import Model
 from src.trainer import get_sigmoid_softmax
 from configs.base_params import PipelineConfig
+
+
+@torch.inference_mode(mode=True)
+def inference_one_fold(
+    model: Model,
+    state_dict: collections.OrderedDict,
+    test_loader: DataLoader,
+    pipeline_config: PipelineConfig,
+) -> np.ndarray:
+    """Inference the model on one fold.
+
+    Args:
+        model (Model): The model to be used for inference.
+            Note that pretrained should be set to False.
+        state_dict (collections.OrderedDict): The state dict of the model.
+        test_loader (DataLoader): The dataloader for the test set.
+
+    Returns:
+        test_probs (np.ndarray): The predictions of the model.
+    """
+    device = pipeline_config.device
+    model.to(device)
+    model.eval()
+
+    model.load_state_dict(state_dict)
+
+    current_fold_probs = []
+
+    for batch in tqdm(test_loader, position=0, leave=True):
+        images = batch.to(device, non_blocking=True)
+        test_logits = model(images)
+        test_probs = get_sigmoid_softmax(pipeline_config)(test_logits).cpu().numpy()
+        current_fold_probs.append(test_probs)
+    current_fold_probs = np.concatenate(current_fold_probs, axis=0)
+    return current_fold_probs
 
 
 @torch.inference_mode(mode=True)
@@ -24,9 +58,12 @@ def inference_all_folds(
     pipeline_config: PipelineConfig,
 ) -> np.ndarray:
     """Inference the model on all K folds.
+
     Args:
-        model (Model): The model to be used for inference. Note that pretrained should be set to False.
-        state_dicts (List[collections.OrderedDict]): The state dicts of the models. Generally, K Fold means K state dicts.
+        model (Model): The model to be used for inference.
+            Note that pretrained should be set to False.
+        state_dicts (List[collections.OrderedDict]): The state dicts of the models.
+            Generally, K Fold means K state dicts.
         test_loader (DataLoader): The dataloader for the test set.
 
     Returns:
@@ -38,16 +75,9 @@ def inference_all_folds(
 
     all_folds_probs = []
     for _fold_num, state in enumerate(state_dicts):
-        model.load_state_dict(state)
-
-        current_fold_probs = []
-
-        for batch in tqdm(test_loader, position=0, leave=True):
-            images = batch.to(device, non_blocking=True)
-            test_logits = model(images)
-            test_probs = get_sigmoid_softmax(pipeline_config)(test_logits).cpu().numpy()
-            current_fold_probs.append(test_probs)
-        current_fold_probs = np.concatenate(current_fold_probs, axis=0)
+        current_fold_probs = inference_one_fold(
+            model, state, test_loader, pipeline_config
+        )
         all_folds_probs.append(current_fold_probs)
     mean_preds = np.mean(all_folds_probs, axis=0)
     return mean_preds
