@@ -355,11 +355,13 @@ class ImageClassificationDataModule(CustomizedDataModule):
             )
 
         self.train_df, self.valid_df = self.cross_validation_split(df, fold)
+        self.oof_df = self.valid_df.copy()
         if self.pipeline_config.datamodule.debug:
             num_debug_samples = self.pipeline_config.datamodule.num_debug_samples
             print(f"Debug mode is on, using {num_debug_samples} images for training.")
             self.train_df = self.train_df.sample(num_debug_samples)
             self.valid_df = self.valid_df.sample(num_debug_samples)
+            self.oof_df = self.valid_df.copy()
 
     def setup(self, stage: str) -> None:
         """Assign train/val datasets for use in dataloaders."""
