@@ -536,7 +536,6 @@ class RSNABreastDataModule(CustomizedDataModule):
                 transforms=valid_transforms,
             )
         elif stage == "test":
-            print(self.test_df)
             test_transforms = self.transforms.test_transforms
             self.test_dataset = ImageClassificationDataset(
                 self.pipeline_config,
