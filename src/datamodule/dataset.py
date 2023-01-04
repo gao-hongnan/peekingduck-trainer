@@ -297,10 +297,11 @@ class ImageClassificationDataModule(CustomizedDataModule):
             ):
                 df.loc[valid_idx, "fold"] = _fold + 1
             df["fold"] = df["fold"].astype(int)
-            df.to_csv("df.csv", index=False)
+
             print(
                 df.groupby(["fold", self.pipeline_config.data.target_col_name]).size()
             )
+            # FIXME: if fold is None, then train_df is the full df
             train_df = df[df.fold != fold].reset_index(drop=True)
             valid_df = df[df.fold == fold].reset_index(drop=True)
             print("fold", fold, "train", train_df.shape, "valid", valid_df.shape)
@@ -336,8 +337,13 @@ class ImageClassificationDataModule(CustomizedDataModule):
         print(f"Total number of test images: {len(test_images)}")
 
         if Path(self.pipeline_config.data.train_csv).exists():
+            # TODO: this step is assumed to be done by user where
+            # image_path is inside the csv.
             df = pd.read_csv(self.pipeline_config.data.train_csv)
         else:
+            # TODO: only invoke this if images are store in the following format
+            # train_dir
+            #   - class1 ...
             df = create_dataframe_with_image_info(
                 train_images,
                 self.pipeline_config.data.class_name_to_id,
@@ -356,6 +362,7 @@ class ImageClassificationDataModule(CustomizedDataModule):
 
         self.train_df, self.valid_df = self.cross_validation_split(df, fold)
         self.oof_df = self.valid_df.copy()
+
         if self.pipeline_config.datamodule.debug:
             num_debug_samples = self.pipeline_config.datamodule.num_debug_samples
             print(f"Debug mode is on, using {num_debug_samples} images for training.")
@@ -455,6 +462,7 @@ class RSNABreastDataModule(CustomizedDataModule):
             print(
                 df.groupby(["fold", self.pipeline_config.data.target_col_name]).size()
             )
+
             train_df = df[df.fold != fold].reset_index(drop=True)
             valid_df = df[df.fold == fold].reset_index(drop=True)
             print("fold", fold, "train", train_df.shape, "valid", valid_df.shape)
