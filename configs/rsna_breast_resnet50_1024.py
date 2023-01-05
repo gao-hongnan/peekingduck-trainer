@@ -42,7 +42,7 @@ class Data:
     train_dir: Union[str, Path] = field(init=False)
     test_dir: Union[str, Path] = field(init=False)
     data_dir: Union[str, Path] = field(init=False)
-    image_col_name: str = "image_id_final"
+    image_col_name: str = "patient_and_image_id"
     image_path_col_name: str = "image_path"
     group_by: str = "patient_id"
     stratify_by: Optional[str] = "cancer"
