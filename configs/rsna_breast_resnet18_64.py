@@ -114,7 +114,7 @@ class DataModuleParams:
 
     train_loader: Dict[str, Any] = field(
         default_factory=lambda: {
-            "batch_size": 32,
+            "batch_size": 128,
             "num_workers": 2,
             "pin_memory": True,
             "drop_last": False,
@@ -124,7 +124,7 @@ class DataModuleParams:
     )
     valid_loader: Dict[str, Any] = field(
         default_factory=lambda: {
-            "batch_size": 32,
+            "batch_size": 128,
             "num_workers": 2,
             "pin_memory": True,
             "drop_last": False,
@@ -250,7 +250,7 @@ class OptimizerParams:
     optimizer: str = "AdamW"
     optimizer_params: Dict[str, Any] = field(
         default_factory=lambda: {
-            "lr": 3e-4,  # 32 -> 1e-4
+            "lr": 3e-4 * 4,  # 32 -> 1e-4
             "betas": (0.9, 0.999),
             "amsgrad": False,
             "weight_decay": 1e-6,
@@ -287,7 +287,7 @@ class GlobalTrainParams:
 
     debug: bool = False
     debug_multiplier: int = 128
-    epochs: int = 10  # 10 when not debug
+    epochs: int = 1  # 10 when not debug
     use_amp: bool = True
     patience: int = 100
     classification_type: str = "multiclass"
