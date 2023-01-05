@@ -469,22 +469,3 @@ class RSNABreastDataModule(ImageClassificationDataModule):
                 extension=".dcm",
             )
         )
-
-
-if __name__ == "__main__":
-    seed_all(42)
-
-    from configs.global_params import PipelineConfig as SteelPipelineConfig
-
-    pipeline_config = SteelPipelineConfig()
-    dm = ImageClassificationDataModule(pipeline_config)
-    dm.prepare_data()
-    dm.setup(stage="fit")
-
-    image, target = dm.train_dataset[0]
-    print(image.shape, target)
-
-    debug_train_loader = dm.train_dataloader()
-    image_batch, target_batch = next(iter(debug_train_loader))
-    image_grid = torchvision.utils.make_grid(image_batch)
-    show(image_grid)
