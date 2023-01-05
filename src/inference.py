@@ -69,10 +69,6 @@ def inference_all_folds(
     Returns:
         mean_preds (np.ndarray): The mean of the predictions of all folds.
     """
-    device = pipeline_config.device
-    model.to(device)
-    model.eval()
-
     all_folds_probs = []
     for _fold_num, state in enumerate(state_dicts):
         current_fold_probs = inference_one_fold(

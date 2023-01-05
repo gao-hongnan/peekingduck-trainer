@@ -101,6 +101,8 @@ class MetricMonitor:
 
 
 def pfbeta_torch(labels, preds, beta=1):  # beta=1 is F1 score
+    if preds.shape[1] == 2:
+        preds = preds[:, 1]
     preds = preds.clip(0, 1)
     y_true_count = labels.sum()
     ctp = preds[labels == 1].sum()
