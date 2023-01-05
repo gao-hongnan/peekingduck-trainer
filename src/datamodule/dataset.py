@@ -51,9 +51,11 @@ class ImageClassificationDataset(Dataset):
         **kwargs,
     ) -> None:
         """Constructor for the dataset class.
+
         Note:
             image_path, image_id and class_id are hardcoded as the column names
             of df are assumed to be such.
+
         Args:
             df (pd.DataFrame): Dataframe for either train, valid or test.
                 This holds the image infos such as image path, image id, target etc.
@@ -96,7 +98,7 @@ class ImageClassificationDataset(Dataset):
         elif self.transforms and isinstance(self.transforms, T.Compose):
             image = self.transforms(image)
         else:
-            image = torch.from_numpy(image).permute(2, 0, 1)  # float32
+            image = torch.from_numpy(image).permute(2, 0, 1)  # convert HWC to CHW
         return torch.tensor(image, dtype=dtype)
 
     # pylint: disable=no-self-use # not yet!
@@ -134,6 +136,7 @@ class ImageClassificationDataset(Dataset):
         target = self.targets[index] if self.stage != "test" else torch.ones(1)
         target = self.apply_target_transforms(target)
 
+        # TODO: consider stage to be private since it is only used internally.
         if self.stage in ["train", "valid", "debug"]:
             return image, target
         elif self.stage == "test":
