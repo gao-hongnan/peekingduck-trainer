@@ -21,6 +21,10 @@ class Callback:
     This might be because some default callbacks instantiate some global attributes
     for eg, self.model_artifacts_dir
 
+    Note:
+        Different concrete callbacks can invoke different `on_..._start` and `on_..._end` methods.
+        Therefore it is not an ABC class.
+
     Reference:
         - https://github.com/Lightning-AI/lightning/blob/master/src/pytorch_lightning/callbacks/callback.py
         - https://github.com/Atharva-Phatak/torchflare/tree/main/torchflare

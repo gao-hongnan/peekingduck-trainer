@@ -21,6 +21,7 @@ from tqdm import tqdm
 
 
 ## set and get attribute dynamically
+# TODO: recursive_setattr and recursive_getattr
 def rsetattr(obj, attr, val):
     pre, _, post = attr.rpartition(".")
     return setattr(rgetattr(obj, pre) if pre else obj, post, val)

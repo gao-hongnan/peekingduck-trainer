@@ -38,6 +38,7 @@ class Model(ABC, nn.Module):
     def load_backbone(self) -> nn.Module:
         """Load the backbone of the model."""
 
+    # add a signature to the method
     def modify_head(self) -> nn.Module:
         """Modify the head of the model."""
 
@@ -83,6 +84,7 @@ class Model(ABC, nn.Module):
             remove the head and then add a new head.
         """
         # propagate through the model to get the last layer name
+        # FIXME: use [-1] to get last layer
         for name, _param in self.backbone.named_modules():
             last_layer_name = name
 

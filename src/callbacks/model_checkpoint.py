@@ -136,6 +136,7 @@ class ModelCheckpoint(Callback):
         }
         self.model_artifacts_dir = trainer.pipeline_config.stores.model_artifacts_dir
 
+    # TODO: save every K using linked list
     def on_valid_epoch_end(self, trainer: Trainer) -> None:
         """Method to save best model depending on the monitored quantity."""
         valid_score = trainer.valid_epoch_dict.get(self.monitor)

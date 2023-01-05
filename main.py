@@ -30,6 +30,7 @@ def train_generic(pipeline_config: PipelineConfig) -> None:
     valid_loader = dm.valid_dataloader()
 
     model = ImageClassificationModel(pipeline_config).to(pipeline_config.device)
+
     metrics_collection = MetricCollection(
         [
             Accuracy(num_classes=num_classes),

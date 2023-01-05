@@ -363,6 +363,26 @@ class ImageClassificationDataModule(CustomizedDataModule):
         )
 
 
+# TODO: adaptor for tensorflow and pytorch.
+# data_adapter
+
+
+class DataAdapter:
+    def __init__(self, adapter_type: str):
+        if adapter_type == "pytorch":
+            self.adapter = PyTorchAdapter()
+            self.loader = DataLoader
+        elif adapter_type == "tensorflow":
+            self.adapter = TensorFlowAdapter()
+            self.loader = DataLoader
+
+    def __next__(self):
+        return self.loader.__next__()
+
+    def __iter__(self):
+        pass
+
+
 if __name__ == "__main__":
     seed_all(42)
 
