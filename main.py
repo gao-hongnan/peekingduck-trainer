@@ -193,15 +193,8 @@ def run(opt: Namespace) -> None:
     print("Pipeline Config:")
     print(str(pipeline_config))
 
-<<<<<<< HEAD
-    if config_name == "mnist_params":
-        train_mnist(pipeline_config)
-    elif "rsna_breast" in config_name:
-        train_one_fold_rsna(pipeline_config, fold=4)
-=======
     if "rsna_breast" in config_name:
         train_one_fold_rsna(pipeline_config, fold=1)
->>>>>>> dev
     elif "_cv_" in config_name:
         train_one_fold(pipeline_config, fold=1)
     else:
