@@ -459,7 +459,7 @@ class RSNABreastDataModule(ImageClassificationDataModule):
 
         # hardcode
         test_df = pd.read_csv(self.pipeline_config.data.test_csv)
-        test_df["image_id_final"] = (
+        test_df[self.pipeline_config.data.image_col_name] = (
             test_df["patient_id"].astype(str) + "/" + test_df["image_id"].astype(str)
         )
         test_df["image_path"] = test_df[self.pipeline_config.data.image_col_name].apply(
