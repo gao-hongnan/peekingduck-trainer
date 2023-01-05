@@ -124,7 +124,7 @@ class TrainConfig(ABC):
     classification_type: str
     monitored_metric: Dict[str, Any]
     use_amp: bool = field(default=False)
-    patience: Literal["inf"] = field(default=float("inf"))
+    patience: float = field(default=float("inf"))
 
 
 @dataclass
