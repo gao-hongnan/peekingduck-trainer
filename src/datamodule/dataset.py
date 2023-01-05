@@ -415,7 +415,7 @@ class ImageClassificationDataModule(CustomizedDataModule):
         )
 
 
-class RSNABreastDataModule(CustomizedDataModule):
+class RSNABreastDataModule(ImageClassificationDataModule):
     """Data module for RSBA Breast image classification dataset."""
 
     def __init__(self, pipeline_config: Optional[PipelineConfig] = None) -> None:
@@ -423,62 +423,9 @@ class RSNABreastDataModule(CustomizedDataModule):
         self.pipeline_config = pipeline_config
         self.transforms = ImageClassificationTransforms(pipeline_config)
 
-    def cross_validation_split(
-        self, df: pd.DataFrame, fold: Optional[int] = None
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Split the dataframe into train and validation dataframes."""
-        resample_strategy = self.pipeline_config.resample.resample_strategy
-        resample_params = self.pipeline_config.resample.resample_params
-        group_by = self.pipeline_config.data.group_by
-        stratify_by = self.pipeline_config.data.stratify_by
-        stratify = df[stratify_by].values if stratify_by else None
-        groups = df[group_by].values if group_by else None
-
-        if resample_strategy == "train_test_split":
-            train_df, valid_df = getattr(model_selection, resample_strategy)(
-                df,
-                # FIXME: stratify is hard coded for now
-                stratify=df[self.pipeline_config.data.target_col_name],
-                **resample_params,
-            )
-        else:
-            try:
-                cv = getattr(model_selection, resample_strategy)(**resample_params)
-            except AttributeError as attr_err:
-                raise ValueError(
-                    f"{resample_strategy} is not a valid resample strategy."
-                ) from attr_err
-            except TypeError as type_err:
-                raise ValueError(
-                    f"Invalid resample params for {resample_strategy}."
-                ) from type_err
-
-            for _fold, (_train_idx, valid_idx) in enumerate(
-                cv.split(df, stratify, groups)
-            ):
-                df.loc[valid_idx, "fold"] = _fold + 1
-            df["fold"] = df["fold"].astype(int)
-
-            print(
-                df.groupby(["fold", self.pipeline_config.data.target_col_name]).size()
-            )
-
-            train_df = df[df.fold != fold].reset_index(drop=True)
-            valid_df = df[df.fold == fold].reset_index(drop=True)
-            print("fold", fold, "train", train_df.shape, "valid", valid_df.shape)
-
-        return train_df, valid_df
-
     def prepare_data(self, fold: Optional[int] = None) -> None:
-        url = self.pipeline_config.data.url
-        blob_file = self.pipeline_config.data.blob_file
-        root_dir = self.pipeline_config.data.root_dir
         train_dir = self.pipeline_config.data.train_dir
         test_dir = self.pipeline_config.data.test_dir
-
-        if self.pipeline_config.data.download:
-            download_to(url, blob_file, root_dir)
-            extract_file(root_dir, blob_file)
 
         train_images = return_list_of_files(
             train_dir, extensions=[".jpg", ".png", ".jpeg"], return_string=False
@@ -490,7 +437,7 @@ class RSNABreastDataModule(CustomizedDataModule):
         print(f"Total number of test images: {len(test_images)}")
 
         df = pd.read_csv(self.pipeline_config.data.train_csv)
-        df["image_id_final"] = (
+        df[self.pipeline_config.data.image_col_name] = (
             df["patient_id"].astype(str) + "_" + df["image_id"].astype(str)
         )
         df["image_path"] = df[self.pipeline_config.data.image_col_name].apply(
@@ -521,52 +468,6 @@ class RSNABreastDataModule(CustomizedDataModule):
                 folder=test_dir,
                 extension=".dcm",
             )
-        )
-        self.test_df = test_df.drop_duplicates(subset="prediction_id")
-        # hardcode
-
-    def setup(self, stage: str) -> None:
-        """Assign train/val datasets for use in dataloaders."""
-        if stage == "fit":
-            train_transforms = self.transforms.train_transforms
-            valid_transforms = self.transforms.valid_transforms
-
-            self.train_dataset = ImageClassificationDataset(
-                self.pipeline_config,
-                df=self.train_df,
-                stage="train",
-                transforms=train_transforms,
-            )
-            self.valid_dataset = ImageClassificationDataset(
-                self.pipeline_config,
-                df=self.valid_df,
-                stage="valid",
-                transforms=valid_transforms,
-            )
-        elif stage == "test":
-            test_transforms = self.transforms.test_transforms
-            self.test_dataset = ImageClassificationDataset(
-                self.pipeline_config,
-                df=self.test_df,
-                stage="test",
-                transforms=test_transforms,
-            )
-
-    def train_dataloader(self) -> DataLoader:
-        """Train dataloader."""
-        return DataLoader(
-            self.train_dataset,
-            **self.pipeline_config.datamodule.train_loader,
-        )
-
-    def valid_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.valid_dataset, **self.pipeline_config.datamodule.valid_loader
-        )
-
-    def test_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.test_dataset, **self.pipeline_config.datamodule.test_loader
         )
 
 
