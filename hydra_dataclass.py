@@ -4,8 +4,82 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig, OmegaConf
 from pathlib import Path
-import torchvision.transforms as transforms
+import torchvision.transforms as T
 from src.utils.general_utils import generate_uuid4
+import torchvision
+
+# type: ignore
+import albumentations as A
+import omegaconf
+from omegaconf import DictConfig
+
+import collections
+import importlib
+from itertools import product
+from typing import Any, Dict, Generator
+
+import torch
+from omegaconf import DictConfig, OmegaConf
+from torch import nn
+
+
+def load_obj(obj_path: str, default_obj_path: str = "") -> Any:
+    """
+    Extract an object from a given path.
+    https://github.com/quantumblacklabs/kedro/blob/9809bd7ca0556531fa4a2fc02d5b2dc26cf8fa97/kedro/utils.py
+        Args:
+            obj_path: Path to an object to be extracted, including the object name.
+            default_obj_path: Default object path.
+        Returns:
+            Extracted object.
+        Raises:
+            AttributeError: When the object does not have the given named attribute.
+    """
+    obj_path_list = obj_path.rsplit(".", 1)
+    obj_path = obj_path_list.pop(0) if len(obj_path_list) > 1 else default_obj_path
+    obj_name = obj_path_list[0]
+    module_obj = importlib.import_module(obj_path)
+    if not hasattr(module_obj, obj_name):
+        raise AttributeError(f"Object `{obj_name}` cannot be loaded from `{obj_path}`.")
+    return getattr(module_obj, obj_name)
+
+
+def load_augs(cfg: DictConfig) -> A.Compose:
+    """
+    Load albumentations
+    Args:
+        cfg:
+    Returns:
+        compose object
+    """
+    augs = []
+    for a in cfg:
+        if a["class_name"] == "albumentations.OneOf":
+            small_augs = []
+            for small_aug in a["params"]:
+                # yaml can't contain tuples, so we need to convert manually
+                params = {
+                    k: (
+                        v
+                        if not isinstance(v, omegaconf.listconfig.ListConfig)
+                        else tuple(v)
+                    )
+                    for k, v in small_aug["params"].items()
+                }
+                aug = load_obj(small_aug["class_name"])(**params)
+                small_augs.append(aug)
+            aug = load_obj(a["class_name"])(small_augs)
+            augs.append(aug)
+
+        else:
+            params = {
+                k: (v if type(v) != omegaconf.listconfig.ListConfig else tuple(v))
+                for k, v in a["params"].items()
+            }
+            aug = load_obj(a["class_name"])(**params)
+            augs.append(aug)
+
+    return T.Compose(augs)
 
 
 @dataclass
@@ -108,47 +182,63 @@ class DataModuleParams:
 class AugmentationParams:
     """Class to keep track of the augmentation parameters."""
 
-    _target_: str = "src.data.augmentation.Augmentation"
     image_size: int = 32
     mean: List[float] = field(default_factory=lambda: [0.485, 0.456, 0.406])
     std: List[float] = field(default_factory=lambda: [0.229, 0.224, 0.225])
 
     mixup: bool = False
     mixup_params: Optional[Dict[str, Any]] = None
-
+    a: torchvision.transforms.Compose = 1
     # TODO: give warning since it defaults to None if not keyed in?
-    train_transforms: transforms = field(init=True, default=None)
-    # valid_transforms: Optional[T.Compose] = field(init=True, default=None)
-    # test_transforms: Optional[T.Compose] = field(init=True, default=None)
-    # debug_transforms: Optional[T.Compose] = field(init=True, default=None)
+    train_transforms: List[Dict[str, Any]] = field(
+        default_factory=lambda: [
+            {"class_name": "torchvision.transforms.ToPILImage", "params": {}},
+            {
+                "class_name": "torchvision.transforms.RandomResizedCrop",
+                "params": {"size": "${transforms.image_size}"},
+            },
+            {
+                "class_name": "torchvision.transforms.RandomHorizontalFlip",
+                "params": {"p": 0.5},
+            },
+            {"class_name": "torchvision.transforms.ToTensor", "params": {}},
+            {
+                "class_name": "torchvision.transforms.Normalize",
+                "params": {"mean": "${transforms.mean}", "std": "${transforms.std}"},
+            },
+        ]
+    )
+
+    valid_transforms: List[Dict[str, Any]] = field(
+        default_factory=lambda: [
+            {"class_name": "torchvision.transforms.ToPILImage", "params": {}},
+            {
+                "class_name": "torchvision.transforms.Resize",
+                "params": {"size": "${transforms.image_size}"},
+            },
+            {"class_name": "torchvision.transforms.ToTensor", "params": {}},
+            {
+                "class_name": "torchvision.transforms.Normalize",
+                "params": {"mean": "${transforms.mean}", "std": "${transforms.std}"},
+            },
+        ]
+    )
+    test_transforms: List[Dict[str, Any]] = field(
+        default_factory=lambda: [
+            {"class_name": "torchvision.transforms.ToPILImage", "params": {}},
+            {
+                "class_name": "torchvision.transforms.Resize",
+                "params": {"size": "${transforms.image_size}"},
+            },
+            {"class_name": "torchvision.transforms.ToTensor", "params": {}},
+            {
+                "class_name": "torchvision.transforms.Normalize",
+                "params": {"mean": "${transforms.mean}", "std": "${transforms.std}"},
+            },
+        ]
+    )
 
 
-# self.train_transforms = T.Compose(
-#     [
-#         T.ToPILImage(),
-#         T.RandomResizedCrop(self.image_size),
-#         T.RandomHorizontalFlip(),
-#         T.ToTensor(),
-#         T.Normalize(self.mean, self.std),
-#     ]
-# )
-# self.valid_transforms = T.Compose(
-#     [
-#         T.ToPILImage(),
-#         T.Resize(self.image_size),
-#         T.ToTensor(),
-#         T.Normalize(self.mean, self.std),
-#     ]
-# )
-
-# self.test_transforms = T.Compose(
-#     [
-#         T.ToPILImage(),
-#         T.Resize(self.image_size),
-#         T.ToTensor(),
-#         T.Normalize(self.mean, self.std),
-#     ]
-# )
 @dataclass
 class ModelParams:
     """Class to keep track of the model parameters."""
@@ -220,6 +310,21 @@ class SchedulerParams:
     )
 
 
+# @dataclass
+# class CallbackParams:
+#     """Callback params."""
+
+#     callbacks: List[Callback] = field(
+#         default_factory=lambda: [
+#             History(),
+#             MetricMeter(),
+#             ModelCheckpoint(mode="max", monitor="val_Accuracy"),
+#             EarlyStopping(mode="max", monitor="val_Accuracy", patience=3),
+#             # WandbLogger(project="CIFAR-10", entity="hongnan-aisg"),
+#         ]
+#     )
+
+
 @dataclass
 class GlobalTrainParams:
     """Train params, a lot of overlapping.
@@ -247,6 +352,12 @@ class Stores:
     # logs_dir: Path = field(init=False)
     # model_artifacts_dir: Path = field(init=False)
 
+    def __post_init__(self):
+        """Post init."""
+        # self.logs_dir = Path("logs") / self.project_name / self.unique_id
+        # self.model_artifacts_dir = Path("model_artifacts") / self.project_name / self.unique_id
+        self.unique_id = torch.rand(1).item()
+
 
 @dataclass
 class Config:
@@ -254,7 +365,7 @@ class Config:
     data: Data = Data()
     resample: Resampling = Resampling()
     datamodule: DataModuleParams = DataModuleParams()
-    # transforms: AugmentationParams = AugmentationParams()
+    transforms: AugmentationParams = AugmentationParams()
     model: ModelParams = ModelParams()
     criterion_params: CriterionParams = CriterionParams()
     optimizer_params: OptimizerParams = OptimizerParams()
@@ -282,6 +393,11 @@ def my_app(cfg: Config) -> None:
     stores = cfg.stores
     print(stores.unique_id)
 
+    transforms = cfg.transforms
+    print(transforms.train_transforms)
+    train_transforms = load_augs(transforms.train_transforms)
+    print(train_transforms)
+
 
 if __name__ == "__main__":
-    my_app()
+    my_app()  # pylint: disable=no-value-for-parameter
