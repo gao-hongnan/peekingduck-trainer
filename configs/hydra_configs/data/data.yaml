@@ -1,0 +1,27 @@
+root_dir: !!python/object/apply:pathlib.PosixPath []
+data_dir: ${data.root_dir}/data
+dataset_name: cifar10
+train_dir: ${data.data_dir}/${data.dataset_name}/train
+test_dir: ${data.data_dir}/${data.dataset_name}/test
+train_csv: ${data.data_dir}/${data.dataset_name}/train.csv
+test_csv: ${data.data_dir}/${data.dataset_name}/test.csv
+url: https://github.com/gao-hongnan/peekingduck-trainer/releases/download/v0.0.1-alpha/cifar10.zip
+blob_file: cifar10.zip
+download: false
+image_col_name: image_id
+image_path_col_name: image_path
+label_col_name: class_id
+group_by: null
+stratify_by: null
+image_extension: .png
+class_name_to_id:
+  airplane: 0
+  automobile: 1
+  bird: 2
+  cat: 3
+  deer: 4
+  dog: 5
+  frog: 6
+  horse: 7
+  ship: 8
+  truck: 9

@@ -352,12 +352,6 @@ class Stores:
     # logs_dir: Path = field(init=False)
     # model_artifacts_dir: Path = field(init=False)
 
-    def __post_init__(self):
-        """Post init."""
-        # self.logs_dir = Path("logs") / self.project_name / self.unique_id
-        # self.model_artifacts_dir = Path("model_artifacts") / self.project_name / self.unique_id
-        self.unique_id = torch.rand(1).item()
-
 
 @dataclass
 class Config:

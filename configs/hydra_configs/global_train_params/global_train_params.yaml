@@ -1,0 +1,7 @@
+epochs: 10
+use_amp: True
+patient: 3
+classification_type: "multiclass"
+monitored_metric: 
+  monitor: "val_Accuracy"
+  mode: "max"

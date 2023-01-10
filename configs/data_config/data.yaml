@@ -1,2 +1,0 @@
-root_dir: ../data
-train_dir: ${root_dir}/train

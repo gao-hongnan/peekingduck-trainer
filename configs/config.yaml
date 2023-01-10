@@ -1,5 +1,0 @@
-defaults:
-  - _self_
-  - model_config: model
-  - data_config: data
-  - store_config: store

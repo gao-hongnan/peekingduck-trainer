@@ -1,0 +1,16 @@
+train_criterion: CrossEntropyLoss
+valid_criterion: CrossEntropyLoss
+train_criterion_params:
+  weight: null
+  size_average: null
+  ignore_index: -100
+  reduce: null
+  reduction: mean
+  label_smoothing: 0.0
+valid_criterion_params:
+  weight: null
+  size_average: null
+  ignore_index: -100
+  reduce: null
+  reduction: mean
+  label_smoothing: 0.0

@@ -6,8 +6,8 @@ __pycache__/
 # C extensions
 *.so
 *.pyc
-data/
-stores/
+/data
+/stores
 
 # pycache
 __pycache__/

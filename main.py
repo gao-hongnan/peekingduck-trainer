@@ -203,37 +203,6 @@ def run(opt: Namespace) -> None:
         # inference_generic(pipeline_config)
         # create_oof_df(pipeline_config)
 
-class Controller:
-    def __init__(self, config):
-        self.config = config
-
-    def instantiate(self, obj):
-        ...
-
-    def get_datamodule(self, datamodule):
-        ...
-
-    def get_model(self, model):
-        ...
-
-    def get_metrics(self, metrics):
-        ...
-
-    def get_callbacks(self, callbacks):
-        ...
-
-    def get_trainer(self, trainer):
-        ...
-
-    def run(self):
-        self.instantiate(self.config)
-        self.get_datamodule(self.config.datamodule)
-        self.get_model(self.config.model)
-        self.get_metrics(self.config.metrics)
-        self.get_callbacks(self.config.callbacks)
-        self.get_trainer(self.config.trainer)
-        self.run_trainer()
-
 
 if __name__ == "__main__":
     seed_all(1992)

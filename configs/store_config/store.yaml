@@ -1,5 +1,0 @@
-#project_name: "CIFAR-10"
-__target__: str(uuid.uuid4())
-#unique_id: ${general_utils.generate_unique_id}
-# logs_dir: Path = field(init=False)
-# model_artifacts_dir: Path = field(init=False)

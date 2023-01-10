@@ -1,0 +1,4 @@
+project_name: "CIFAR-10"
+unique_id: ${now:%Y-%m-%d_%H-%M-%S}
+logs_dir: null
+model_artifacts_dir: null

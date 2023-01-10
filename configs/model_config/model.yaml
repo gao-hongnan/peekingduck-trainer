@@ -1,4 +1,0 @@
-adapter: "torchvision"  # "torchvision" "timm"
-model_name: "resnet18"  # resnet18 "tf_efficientnetv2_s"
-pretrained: True
-num_classes: 10  

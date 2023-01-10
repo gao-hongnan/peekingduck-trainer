@@ -1,0 +1,23 @@
+debug: true
+num_debug_samples: 128
+train_loader:
+  batch_size: 32
+  num_workers: 0
+  pin_memory: true
+  drop_last: false
+  shuffle: true
+  collate_fn: null
+valid_loader:
+  batch_size: 32
+  num_workers: 0
+  pin_memory: true
+  drop_last: false
+  shuffle: false
+  collate_fn: null
+test_loader:
+  batch_size: 32
+  num_workers: 0
+  pin_memory: true
+  drop_last: false
+  shuffle: false
+  collate_fn: null

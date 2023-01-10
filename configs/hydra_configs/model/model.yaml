@@ -1,0 +1,4 @@
+adapter: torchvision
+model_name: resnet18
+pretrained: true
+num_classes: 10 
