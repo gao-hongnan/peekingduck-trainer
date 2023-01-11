@@ -31,3 +31,13 @@ valid_transforms:
     - _target_: torchvision.transforms.Normalize
       mean: ${transforms.mean}
       std: ${transforms.std}
+test_transforms:
+  _target_: torchvision.transforms.Compose
+  transforms:
+    - _target_: torchvision.transforms.ToPILImage
+    - _target_: torchvision.transforms.Resize
+      size: ${transforms.image_size}
+    - _target_: torchvision.transforms.ToTensor
+    - _target_: torchvision.transforms.Normalize
+      mean: ${transforms.mean}
+      std: ${transforms.std}
