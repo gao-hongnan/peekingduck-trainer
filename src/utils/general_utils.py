@@ -257,9 +257,7 @@ def create_dataframe_with_image_info(
     return df
 
 
-def free_gpu_memory(
-    *args,
-) -> None:
+def free_gpu_memory(*args) -> None:
     """Delete all variables from the GPU. Clear cache.
     Args:
         model ([type], optional): [description]. Defaults to None.
